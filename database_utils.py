@@ -308,6 +308,16 @@ def make_session(user_id):
     cursor = conn.cursor(dictionary=True)
     cursor.execute(sql, (user_id,))
     return cursor.lastrowid
+
+def get_user_id_from_session(session_id):
+    sql = """select user_id from session where id = %s"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (session_id,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret["user_id"]
+    else:
+        return None
     
 if __name__ == "__main__":
     #rows = get_movie("Avatar")
@@ -324,3 +334,4 @@ if __name__ == "__main__":
     #insert_follow(get_user_id("yungmarsh"), get_user_id("mrpoopypants"))
     print(get_followers(get_user_id("mrpoopypants")))
     print(get_followees(get_user_id("yungmarsh")))
+    print(get_user_id_from_session(4))
