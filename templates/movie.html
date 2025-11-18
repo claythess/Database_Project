@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ movie['title'] }} - Movie Application</title>
+<style>
+body {
+    background-color: black;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.header {
+    text-align: center;
+    padding: 20px;
+    position: relative;
+}
+
+.logo {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    cursor: pointer;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.movie-header {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.movie-poster {
+    flex-shrink: 0;
+}
+
+.movie-poster img {
+    width: 300px;
+    height: auto;
+    border-radius: 10px;
+}
+
+.movie-info {
+    flex: 1;
+}
+
+.movie-title {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.movie-year {
+    font-size: 20px;
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.movie-rating {
+    font-size: 24px;
+    color: #ffd700;
+    margin-bottom: 20px;
+}
+
+.info-section {
+    margin-bottom: 15px;
+}
+
+.info-label {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.info-content {
+    font-size: 16px;
+}
+
+.koala-corner {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    max-width: 150px;
+    width: 100%;
+    height: auto;
+}
+</style>
+</head>
+<body>
+<div class="header">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Movie App Logo" class="logo" onclick="window.location.href='/'">
+</div>
+
+<div class="container">
+    <div class="movie-header">
+        <div class="movie-poster">
+            {% if movie['image_url'] %}
+            <img src="{{ movie['image_url'] }}" alt="{{ movie['title'] }}">
+            {% else %}
+            <img src="https://via.placeholder.com/300x450?text=No+Image" alt="{{ movie['title'] }}">
+            {% endif %}
+        </div>
+        
+        <div class="movie-info">
+            <h1 class="movie-title">{{ movie['title'] }}</h1>
+            <div class="movie-year">{{ movie['year'] }}</div    >
+            
+            {% if movie['imdb_rating'] %}
+            <div class="movie-rating">⭐ {{ movie['imdb_rating'] }}/10</div>
+            {% endif %}
+            
+            <div class="info-section">
+                <div class="info-label">Language</div>
+                <div class="info-content">{{ movie['language'] }}</div>
+            </div>
+            
+            {% if movie['budget'] %}
+            <div class="info-section">
+                <div class="info-label">Budget</div>
+                <div class="info-content">${{ "{:,}".format(movie['budget']) }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<img src="{{ url_for('static', filename='koala.png') }}" alt="Koala" class="koala-corner" onclick="playLaugh()" style="cursor: pointer;">
+
+<audio id="laughSound">
+    <source src="{{ url_for('static', filename='laugh.wav') }}" type="audio/mpeg">
+</audio>
+
+<script>
+function playLaugh() {
+    var audio = document.getElementById('laughSound');
+    audio.play();
+}
+</script>
+</body>
+</html>

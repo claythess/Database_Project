@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile - Movie Application</title>
+<style>
+body {
+    background-color: black;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.header {
+    text-align: center;
+    padding: 20px;
+    position: relative;
+}
+
+.logo {
+    max-width: 500px;
+    width: 100%;
+    height: auto;
+}
+
+.logout-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: #2a2a2a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background-color: #3a3a3a;
+}
+
+.main-container {
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+}
+
+.sidebar {
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding-top: 20px;
+}
+
+.star-icon {
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.star-icon:hover {
+    transform: scale(1.1);
+}
+
+.content {
+    flex: 1;
+    padding-left: 40px;
+}
+
+.profile-section {
+    margin-bottom: 40px;
+}
+
+.profile-section h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.review-box {
+    background-color: #1a1a1a;
+    padding: 20px;
+    border-radius: 8px;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.koala-corner {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    max-width: 150px;
+    width: 100%;
+    height: auto;
+}
+</style>
+</head>
+<body>
+<div class="header">
+    <button class="logout-btn" onclick="window.location.href='/'">Logout</button>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Sick Movie Application" class="logo">
+</div>
+
+<div class="main-container">
+    <div class="sidebar">
+        <img src="{{ url_for('static', filename='stars.png') }}" alt="Star" class="star-icon">
+        <img src="{{ url_for('static', filename='stars.png') }}" alt="Star" class="star-icon">
+        <img src="{{ url_for('static', filename='stars.png') }}" alt="Star" class="star-icon">
+    </div>
+
+    <div class="content">
+        <div class="profile-section">
+            <h2>&lt;USERNAME&gt;</h2>
+        </div>
+
+        <div class="profile-section">
+            <h2>&lt;FAVORITE MOVIE&gt;</h2>
+        </div>
+
+        <div class="profile-section">
+            <h2>&lt;RECENT REVIEWS&gt;</h2>
+            <div class="reviews-grid">
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2>&lt;LISTED LIKE THIS&gt;</h2>
+            <div class="reviews-grid">
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <div class="reviews-grid">
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<img src="{{ url_for('static', filename='koala.png') }}" alt="Koala" class="koala-corner" onclick="playLaugh()" style="cursor: pointer;">
+
+<audio id="laughSound">
+    <source src="{{ url_for('static', filename='laugh.wav') }}" type="audio/mpeg">
+</audio>
+
+<script>
+function playLaugh() {
+    var audio = document.getElementById('laughSound');
+    audio.play();
+}
+</script>
+</body>
+</html>
