@@ -34,22 +34,73 @@ def get_movie_api(title: str, year):
    response = requests.get(url)
    return response.status_code, response.json()
 
+def get_director(name) -> int:
+    sql = """
+    select id from director where lower(name) = lower(%s) limit 1;
+    """
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (name,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret["id"]
+    else:
+        return None
+    
+def get_actor(name) -> int:
+    sql = """
+    select id from actor where lower(name) = lower(%s) limit 1;
+    """
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (name,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret["id"]
+    else:
+        return None
+    
+def get_genre(name) -> int:
+    sql = """
+    select id from genre where lower(name) = lower(%s) limit 1;
+    """
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (name,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret["id"]
+    else:
+        return None
+
 def get_movie(title, year = None) -> dict:
     if year:
         sql = """
-        select * from movie where title = %s and year = %d limit 1;
+        select * from movie where lower(title) = lower(%s) and year = %d limit 1;
         """
         cursor = conn.cursor(dictionary=True)
         cursor.execute(sql, (title, year))
     else:
         sql = """
-        select * from movie where title like %s limit 1;
+        select * from movie where lower(title) like lower(%s) limit 1;
         """
         cursor = conn.cursor(dictionary=True)
         cursor.execute(sql, (title,))
         
     ret = cursor.fetchone()
+    logging.debug(ret)
     if ret:
+        if ret["image_url"] == None:
+            logging.debug("No Image URL, Fetching")
+            status, movie_data = get_movie_api(title, year)
+            if status != 200:
+                logging.debug("Failed To Fetch")
+                return ret
+            
+            sql = "update movie set image_url = %s where id = %s"
+            cursor.execute(sql, (movie_data["Poster"], ret["id"]))
+            
+            sql = "select * from movie where id = %s"
+            cursor.execute(sql, (ret["id"],))
+            ret = cursor.fetchone()
+            
         return ret
     else:
         # Movie doesnt exist, check API
@@ -64,15 +115,81 @@ def get_movie(title, year = None) -> dict:
         year = int(movie_data["Year"])
         language = movie_data["Language"]
         image_url = movie_data["Poster"]
-        imdbRating = movie_data["IMDBRating"]
+        imdbRating = movie_data["imdbRating"]
         
-        sql = """insert into movie (title, language, image_url, imdbRating, year) values (%s, %s, %s, nullif(%s,"N/A"), %s)"""
+        conn.autocommit = False
         
-        movie_id = cursor.execute(sql, (title, language, image_url, imdbRating, year,))
+        sql = """insert into movie (title, language, image_url, imdb_rating, year) values (%s, %s, %s, nullif(%s,"N/A"), %s)"""
+        cursor.execute(sql, (title, language, image_url, imdbRating, year))
+        movie_id = cursor.lastrowid
+        
+        director = movie_data["Director"]
+        
+        director_id = get_director(director)
+        
+        if director_id == None:
+            sql = """insert into director (name) values (%s)"""
+            cursor.execute(sql, (director,))
+            director_id = cursor.lastrowid
+            
+        sql = """insert into director_movie (movie_id, director_id) values (%s, %s)"""
+        cursor.execute(sql, (movie_id, director_id))
+        
+        for actor in movie_data["Actors"].split(", "):
+            actor_id = get_actor(actor)
+            if actor_id == None:
+                sql = """insert into actor (name) values (%s)"""
+                cursor.execute(sql, (actor,))
+                actor_id = cursor.lastrowid
+                
+            sql = """insert into actor_movie (movie_id, actor_id) values (%s, %s)"""
+            cursor.execute(sql, (movie_id, actor_id))
+            
+        for genre in movie_data["Genre"].split(", "):
+            genre_id = get_genre(genre)
+            if genre_id == None:
+                sql = """insert into genre (name) values (%s)"""
+                cursor.execute(sql, (genre,))
+                genre_id = cursor.lastrowid
+                
+            sql = """insert into genre_movie (movie_id, genre_id) values (%s, %s)"""
+            cursor.execute(sql, (movie_id, genre_id))
         
         
         
+        conn.commit()
+        conn.autocommit=True
         
+def get_movie_by_id(id) -> dict:
+    sql = """
+        select * from movie where id = %s;
+        """
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (id,))
+    
+    ret = cursor.fetchone()
+    logging.debug(ret)
+    if ret:
+        if ret["image_url"] == None:
+            logging.debug("No Image URL, Fetching")
+            status, movie_data = get_movie_api(ret["title"], ret["year"])
+            if status != 200:
+                logging.debug("Failed To Fetch")
+                return ret
+            
+            sql = "update movie set image_url = %s where id = %s"
+            cursor.execute(sql, (movie_data["Poster"], ret["id"]))
+            
+            sql = "select * from movie where id = %s"
+            cursor.execute(sql, (ret["id"],))
+            ret = cursor.fetchone()
+            
+        return ret
+    else:
+        return None
+        
+def insert_review():
+    pass        
 
 def get_user_id(username):
     """
@@ -93,7 +210,7 @@ def make_user(username, password):
     cursor = conn.cursor(dictionary=True)
     cursor.execute(sql, (username,))
     
-    user_id = get_user_id(username)['id']
+    user_id = get_user_id(username)
    
     sql = "insert into user_password (user_id, password_hash) values (%s, %s);"
     cursor.execute(sql, (user_id, make_hash(password)))
@@ -117,4 +234,4 @@ if __name__ == "__main__":
     rows = get_movie("Avatar")
     print(rows)
     
-    get_movie("long kiss goodnight")
+    print(get_movie("The Godfather"))
