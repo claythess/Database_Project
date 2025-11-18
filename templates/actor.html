@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ actor.name }} - Actor</title>
+  <style>
+    body { background:#000;color:#fff;font-family:Arial, sans-serif;margin:0;padding:0 }
+    .header{padding:20px;text-align:center}
+    .logo{max-width:400px}
+    .container{max-width:1000px;margin:20px auto;padding:20px}
+    .card{background:#0f0f0f;padding:20px;border-radius:8px}
+    .movies-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px}
+    .movie-box{background:#111;padding:12px;border-radius:6px}
+    a.movie-link{color:#fff;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" onclick="window.location.href='{{ url_for('myprofile') if session.get('token') else url_for('hello_world') }}'" style="cursor:pointer">
+  </div>
+  <div class="container">
+    <div class="card">
+      <h2>{{ actor.name }}</h2>
+      <h3 style="margin-top:16px">Filmography</h3>
+      <div class="movies-grid">
+        {% if movies and movies|length > 0 %}
+          {% for m in movies %}
+            <div class="movie-box">
+              <a class="movie-link" href="{{ url_for('movie_view', movie_id=m.id) }}">
+                <div style="font-weight:bold">{{ m.title }}</div>
+                {% if m.year %}<div style="color:#888">{{ m.year }}</div>{% endif %}
+              </a>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="movie-box">No movies found.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

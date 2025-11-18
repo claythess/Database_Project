@@ -73,7 +73,7 @@ def get_genre(name) -> int:
 def get_movie(title, year = None) -> dict:
     if year:
         sql = """
-        select * from movie where lower(title) = lower(%s) and year = %d limit 1;
+        select * from movie where lower(title) = lower(%s) and year = %s limit 1;
         """
         cursor = conn.cursor(dictionary=True)
         cursor.execute(sql, (title, year))
@@ -93,10 +93,10 @@ def get_movie(title, year = None) -> dict:
             if status != 200:
                 logging.debug("Failed To Fetch")
                 return ret
-            
+
             sql = "update movie set image_url = %s where id = %s"
             cursor.execute(sql, (movie_data["Poster"], ret["id"]))
-            
+
             sql = "select * from movie where id = %s"
             cursor.execute(sql, (ret["id"],))
             ret = cursor.fetchone()
@@ -123,17 +123,17 @@ def get_movie(title, year = None) -> dict:
         cursor.execute(sql, (title, language, image_url, imdbRating, year))
         movie_id = cursor.lastrowid
         
-        director = movie_data["Director"]
+        for director in movie_data["Director"].split(", "):
         
-        director_id = get_director(director)
-        
-        if director_id == None:
-            sql = """insert into director (name) values (%s)"""
-            cursor.execute(sql, (director,))
-            director_id = cursor.lastrowid
+            director_id = get_director(director)
             
-        sql = """insert into director_movie (movie_id, director_id) values (%s, %s)"""
-        cursor.execute(sql, (movie_id, director_id))
+            if director_id == None:
+                sql = """insert into director (name) values (%s)"""
+                cursor.execute(sql, (director,))
+                director_id = cursor.lastrowid
+                
+            sql = """insert into director_movie (movie_id, director_id) values (%s, %s)"""
+            cursor.execute(sql, (movie_id, director_id))
         
         for actor in movie_data["Actors"].split(", "):
             actor_id = get_actor(actor)
@@ -158,6 +158,8 @@ def get_movie(title, year = None) -> dict:
         conn.commit()
         conn.autocommit=True
         
+        return get_movie(title,year)
+        
 def get_movie_by_id(id) -> dict:
     sql = """
         select * from movie where id = %s;
@@ -171,13 +173,13 @@ def get_movie_by_id(id) -> dict:
         if ret["image_url"] == None:
             logging.debug("No Image URL, Fetching")
             status, movie_data = get_movie_api(ret["title"], ret["year"])
-            if status != 200:
+            if status != 200 or not movie_data or "Poster" not in movie_data:
                 logging.debug("Failed To Fetch")
                 return ret
-            
+
             sql = "update movie set image_url = %s where id = %s"
             cursor.execute(sql, (movie_data["Poster"], ret["id"]))
-            
+
             sql = "select * from movie where id = %s"
             cursor.execute(sql, (ret["id"],))
             ret = cursor.fetchone()
@@ -237,6 +239,68 @@ def get_movie_production_company(movie_id):
         return [i["name"] for i in ret]
     else:
         return []
+
+def get_movie_actors_full(movie_id):
+    sql = """select a.id, a.name from actor a
+        join actor_movie am on am.actor_id = a.id
+        where am.movie_id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (movie_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return ret
+    else:
+        return []
+
+def get_movie_directors_full(movie_id):
+    sql = """select d.id, d.name from director d
+        join director_movie dm on dm.director_id = d.id
+        where dm.movie_id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (movie_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return ret
+    else:
+        return []
+
+def get_actor_by_id(actor_id):
+    sql = "select id, name from actor where id = %s;"
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (actor_id,))
+    return cursor.fetchone()
+
+def get_director_by_id(director_id):
+    sql = "select id, name from director where id = %s;"
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (director_id,))
+    return cursor.fetchone()
+
+def get_movies_by_actor(actor_id):
+    sql = """select m.id, m.title, m.year, m.image_url from movie m
+        join actor_movie am on am.movie_id = m.id
+        where am.actor_id = %s
+        order by m.year desc;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (actor_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return ret
+    else:
+        return []
+
+def get_movies_by_director(director_id):
+    sql = """select m.id, m.title, m.year, m.image_url from movie m
+        join director_movie dm on dm.movie_id = m.id
+        where dm.director_id = %s
+        order by m.year desc;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (director_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return ret
+    else:
+        return []
         
 def insert_review(user_id, movie_id, rating, review):
     sql = """insert into movie_rating (user_id, movie_id, rating, review) values (%s, %s, %s, %s);"""
@@ -253,6 +317,58 @@ def get_user_reviews(user_id):
         return ret
     else:
         return []
+
+
+def get_favorite_actor(user_id):
+    sql = """select a.id, a.name from favorite_actor fa join actor a on fa.actor_id = a.id where fa.user_id = %s limit 1;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (user_id,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret
+    else:
+        return None
+
+
+def get_favorite_director(user_id):
+    sql = """select d.id, d.name from favorite_director fd join director d on fd.director_id = d.id where fd.user_id = %s limit 1;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (user_id,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret
+    else:
+        return None
+
+
+def set_favorite_actor_by_name(user_id, actor_name):
+    # ensure actor exists
+    actor_id = get_actor(actor_name)
+    cursor = conn.cursor(dictionary=True)
+    if actor_id is None:
+        sql = "insert into actor (name) values (%s)"
+        cursor.execute(sql, (actor_name,))
+        actor_id = cursor.lastrowid
+
+    # remove existing favorite and insert
+    sql = "delete from favorite_actor where user_id = %s"
+    cursor.execute(sql, (user_id,))
+    sql = "insert into favorite_actor (user_id, actor_id) values (%s, %s)"
+    cursor.execute(sql, (user_id, actor_id))
+
+
+def set_favorite_director_by_name(user_id, director_name):
+    director_id = get_director(director_name)
+    cursor = conn.cursor(dictionary=True)
+    if director_id is None:
+        sql = "insert into director (name) values (%s)"
+        cursor.execute(sql, (director_name,))
+        director_id = cursor.lastrowid
+
+    sql = "delete from favorite_director where user_id = %s"
+    cursor.execute(sql, (user_id,))
+    sql = "insert into favorite_director (user_id, director_id) values (%s, %s)"
+    cursor.execute(sql, (user_id, director_id))
      
 
 def get_user_id(username):
@@ -307,6 +423,18 @@ def get_followees(user_id):
     ret = cursor.fetchall()
     if ret:
         return [i["username"] for i in ret]
+    else:
+        return []
+
+
+def search_users(query):
+    sql = """select id, username from user where lower(username) like lower(%s) limit 50;"""
+    cursor = conn.cursor(dictionary=True)
+    likeq = f"%{query}%"
+    cursor.execute(sql, (likeq,))
+    ret = cursor.fetchall()
+    if ret:
+        return ret
     else:
         return []
 

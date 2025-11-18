@@ -16,6 +16,8 @@ create table movie (
     year int
 );
 
+alter table movie modify column language text;
+
 alter table movie modify column id int auto_increment;
 
 create table director (
@@ -116,7 +118,8 @@ create table follow (
 	follower_id int,
     followee_id int,
     foreign key (follower_id) references user(id),
-    foreign key (followee_id) references user(id)
+    foreign key (followee_id) references user(id),
+    primary key (follower_id, followee_id)
 );
 
 create table movie_rating (

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Write Review - {{ movie.title if movie else 'Movie' }}</title>
+  <style>
+    body { background-color: #000; color: #fff; font-family: Arial, sans-serif; margin:0; padding:0 }
+    .header { text-align:center; padding:20px; }
+    .logo { max-width:400px; width:100%; height:auto; cursor:pointer }
+    .container { max-width:900px; margin:20px auto; padding:20px }
+    .card { background:#0f0f0f; padding:24px; border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.6) }
+    label { display:block; margin-top:12px; color:#ddd; font-size:14px }
+    input[type="number"], textarea, input[type="text"] { width:100%; padding:10px; border-radius:6px; background:#111; border:1px solid #222; color:#fff; box-sizing:border-box }
+    textarea { min-height:140px }
+    .btn { display:inline-block; margin-top:14px; padding:10px 14px; border-radius:6px; background:#2a2a2a; color:#fff; border:none; cursor:pointer }
+    .btn.secondary { background:transparent; color:#ccc; border:1px solid #222; margin-left:8px }
+    .movie-title { font-size:22px; margin-bottom:6px }
+    .error { color:#ff8080; margin-top:8px }
+    .koala-corner { position:fixed; bottom:20px; right:20px; max-width:150px }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo" onclick="window.location.href='{{ url_for('myprofile') if session.get('token') else url_for('hello_world') }}'">
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="movie-title">Write a Review for {{ movie['title'] if movie else 'this movie' }}</div>
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form method="post">
+        <label for="rating">Rating (0.0 - 10.0)</label>
+        <input type="number" id="rating" name="rating" min="0" max="10" step="0.1" value="{{ rating or '' }}" required>
+
+        <label for="review">Your review</label>
+        <textarea id="review" name="review" required>{{ review_text or '' }}</textarea>
+
+        <div>
+          <button type="submit" class="btn">Submit Review</button>
+          <a href="{{ url_for('movie_view', movie_id=movie['id']) }}" class="btn secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <img src="{{ url_for('static', filename='koala.png') }}" alt="Koala" class="koala-corner" onclick="document.getElementById('laughSound').play()" style="cursor:pointer">
+  <audio id="laughSound"><source src="{{ url_for('static', filename='laugh.wav') }}" type="audio/mpeg"></audio>
+</body>
+</html>

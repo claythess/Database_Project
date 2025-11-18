@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ username }} - Profile</title>
+  <style>
+    body { background:#000;color:#fff;font-family:Arial, sans-serif;margin:0;padding:0 }
+    .header{padding:20px;text-align:center}
+    .logo{max-width:400px}
+    .container{max-width:1000px;margin:20px auto;padding:20px}
+    .card{background:#0f0f0f;padding:20px;border-radius:8px}
+    .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px}
+    .review-box{background:#111;padding:12px;border-radius:6px}
+    .fav{font-weight:bold;color:#ffd700}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" onclick="window.location.href='{{ url_for('myprofile') if session.get('token') else url_for('hello_world') }}'" style="cursor:pointer">
+  </div>
+  <div class="container">
+    <div class="card">
+      <h2>{{ username }}</h2>
+      <p>Favorite Actor: {% if favorite_actor %}<a class="fav" href="{{ url_for('actor_view', actor_id=favorite_actor.id) }}">{{ favorite_actor.name }}</a>{% else %}—{% endif %}</p>
+      <p>Favorite Director: {% if favorite_director %}<a class="fav" href="{{ url_for('director_view', director_id=favorite_director.id) }}">{{ favorite_director.name }}</a>{% else %}—{% endif %}</p>
+
+      {% if is_owner %}
+        <form action="/set_favorite_actor" method="post" style="margin-top:10px;">
+          <input type="text" name="actor" placeholder="Set favorite actor (name)" style="padding:8px;border-radius:6px;background:#111;border:1px solid #222;color:#fff">
+          <button type="submit" style="padding:8px 12px;margin-left:8px">Set Actor</button>
+        </form>
+        <form action="/set_favorite_director" method="post" style="margin-top:8px;">
+          <input type="text" name="director" placeholder="Set favorite director (name)" style="padding:8px;border-radius:6px;background:#111;border:1px solid #222;color:#fff">
+          <button type="submit" style="padding:8px 12px;margin-left:8px">Set Director</button>
+        </form>
+      {% else %}
+        {% if is_following %}
+          <form action="/follow_user" method="post" style="display:inline-block;">
+            <input type="hidden" name="followee" value="{{ username }}">
+            <button type="submit" style="padding:8px 12px;">Following</button>
+          </form>
+        {% else %}
+          <form action="/follow_user" method="post" style="display:inline-block;">
+            <input type="hidden" name="followee" value="{{ username }}">
+            <button type="submit" style="padding:8px 12px;">Follow</button>
+          </form>
+        {% endif %}
+      {% endif %}
+
+      <h3 style="margin-top:20px">Recent Reviews</h3>
+      <div class="reviews-grid">
+        {% if reviews and reviews|length > 0 %}
+          {% for r in reviews %}
+            <div class="review-box">
+              <div style="font-weight:bold">
+                {% if r.movie %}
+                  <a href="{{ url_for('movie_view', movie_id=r.movie['id']) }}" style="color:#fff;text-decoration:none">{{ r.movie['title'] }}</a>
+                  {% if r.movie and r.movie['year'] %} ({{ r.movie['year'] }}){% endif %}
+                {% else %}
+                  Unknown
+                {% endif %}
+              </div>
+              <div style="color:#ffd700">Rating: {{ r['rating'] }}</div>
+              <div style="margin-top:6px">{{ r['review'] }}</div>
+              {% if r.get('created_at') %}<div style="font-size:12px;color:#888;margin-top:8px">{{ r['created_at'] }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="review-box">No reviews yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

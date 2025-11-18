@@ -115,6 +115,14 @@ body {
     <img src="{{ url_for('static', filename='logo.png') }}" alt="Sick Movie Application" class="logo">
 </div>
 
+<div style="text-align:center;padding:10px;">
+    <form action="/search" method="POST" style="display:inline-block;">
+        <input type="text" name="title" placeholder="Search movies by title" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;"> 
+        <input type="text" name="year" placeholder="Year (optional)" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;margin-left:5px;"> 
+        <button type="submit" class="logout-btn" style="position:static;display:inline-block;margin-left:10px;padding:8px 12px;">Search</button>
+    </form>
+</div>
+
 <div class="main-container">
     <div class="sidebar">
         <img src="{{ url_for('static', filename='stars.png') }}" alt="Star" class="star-icon">
@@ -124,38 +132,96 @@ body {
 
     <div class="content">
         <div class="profile-section">
-            <h2>&lt;USERNAME&gt;</h2>
+            <h2>People</h2>
+            <form action="/user_search" method="POST" style="margin-bottom:12px;">
+                <input type="text" name="username" placeholder="Search users by name" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+                <button type="submit" class="logout-btn" style="position:static;display:inline-block;margin-left:8px;padding:8px 12px;">Search Users</button>
+            </form>
+            <div style="margin-top:8px">
+                <strong>Following:</strong>
+                {% if followees and followees|length > 0 %}
+                    {% for u in followees %}
+                        <a href="{{ url_for('user_profile', username=u) }}" style="color:#fff;margin-left:8px">{{ u }}</a>
+                    {% endfor %}
+                {% else %}
+                    <span style="margin-left:8px">—</span>
+                {% endif %}
+            </div>
+            <div style="margin-top:8px">
+                <strong>Followers:</strong>
+                {% if followers and followers|length > 0 %}
+                    {% for u in followers %}
+                        <a href="{{ url_for('user_profile', username=u) }}" style="color:#fff;margin-left:8px">{{ u }}</a>
+                    {% endfor %}
+                {% else %}
+                    <span style="margin-left:8px">—</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="profile-section">
+            <h2>{{ username or 'My Profile' }}</h2>
         </div>
 
         <div class="profile-section">
-            <h2>&lt;FAVORITE MOVIE&gt;</h2>
+            <h2>Favorites</h2>
+            <div style="margin-bottom:12px">
+                <strong>Actor:</strong>
+                {% if favorite_actor %}
+                    <a href="{{ url_for('actor_view', actor_id=favorite_actor.id) }}" style="color:#ffd700;text-decoration:none">{{ favorite_actor.name }}</a>
+                {% else %}
+                    <span>—</span>
+                {% endif %}
+            </div>
+            <div style="margin-bottom:12px">
+                <strong>Director:</strong>
+                {% if favorite_director %}
+                    <a href="{{ url_for('director_view', director_id=favorite_director.id) }}" style="color:#ffd700;text-decoration:none">{{ favorite_director.name }}</a>
+                {% else %}
+                    <span>—</span>
+                {% endif %}
+            </div>
+
+            <form action="/set_favorite_actor" method="post" style="margin-top:8px;">
+                <input type="text" name="actor" placeholder="Set favorite actor (name)" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+                <button type="submit" class="logout-btn" style="position:static;display:inline-block;margin-left:8px;padding:8px 12px;">Set Actor</button>
+            </form>
+
+            <form action="/set_favorite_director" method="post" style="margin-top:8px;">
+                <input type="text" name="director" placeholder="Set favorite director (name)" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+                <button type="submit" class="logout-btn" style="position:static;display:inline-block;margin-left:8px;padding:8px 12px;">Set Director</button>
+            </form>
         </div>
 
         <div class="profile-section">
-            <h2>&lt;RECENT REVIEWS&gt;</h2>
+            <h2>Recent Reviews</h2>
             <div class="reviews-grid">
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
+                {% if reviews and reviews|length > 0 %}
+                    {% for r in reviews %}
+                        <div class="review-box" style="align-items:flex-start;justify-content:flex-start;">
+                            <div>
+                                <div style="font-weight:bold;margin-bottom:6px;">
+                                    {% if r.movie %}
+                                        <a href="{{ url_for('movie_view', movie_id=r.movie['id']) }}" style="color:#fff;text-decoration:none">{{ r.movie['title'] }}</a>
+                                        ({{ r.movie['year'] if r.movie and r.movie['year'] else '' }})
+                                    {% else %}
+                                        Unknown Movie
+                                    {% endif %}
+                                </div>
+                                <div style="color:#ffd700;margin-bottom:6px;">Rating: {{ r['rating'] }}</div>
+                                <div style="margin-bottom:8px;">{{ r['review'] }}</div>
+                                {% if r.get('created_at') %}
+                                    <div style="font-size:12px;color:#888;">{{ r['created_at'] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="review-box">No reviews yet.</div>
+                {% endif %}
             </div>
         </div>
 
-        <div class="profile-section">
-            <h2>&lt;LISTED LIKE THIS&gt;</h2>
-            <div class="reviews-grid">
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-            </div>
-        </div>
-
-        <div class="profile-section">
-            <div class="reviews-grid">
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-                <div class="review-box">&lt;SAMPLE REVIEW&gt;</div>
-            </div>
-        </div>
+        <!-- Removed 'Listed Like This' placeholder sections -->
     </div>
 </div>
 

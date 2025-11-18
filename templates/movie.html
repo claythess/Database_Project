@@ -95,7 +95,7 @@ body {
 </head>
 <body>
 <div class="header">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Movie App Logo" class="logo" onclick="window.location.href='/'">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Movie App Logo" class="logo" onclick="window.location.href='{{ url_for('myprofile') if session.get('token') else url_for('hello_world') }}'">
 </div>
 
 <div class="container">
@@ -127,6 +127,53 @@ body {
                 <div class="info-content">${{ "{:,}".format(movie['budget']) }}</div>
             </div>
             {% endif %}
+
+            {% if directors %}
+            <div class="info-section">
+                <div class="info-label">Director{{ 's' if directors|length > 1 else '' }}</div>
+                <div class="info-content">
+                    {% for d in directors %}
+                        <a href="{{ url_for('director_view', director_id=d.id) }}" style="color:#fff;text-decoration:none">{{ d.name }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if actors %}
+            <div class="info-section">
+                <div class="info-label">Actors</div>
+                <div class="info-content">
+                    {% for a in actors %}
+                        <a href="{{ url_for('actor_view', actor_id=a.id) }}" style="color:#fff;text-decoration:none">{{ a.name }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if companies %}
+            <div class="info-section">
+                <div class="info-label">Production Company{{ 'ies' if companies|length > 1 else '' }}</div>
+                <div class="info-content">{{ companies | join(', ') }}</div>
+            </div>
+            {% endif %}
+
+            {% if genres %}
+            <div class="info-section">
+                <div class="info-label">Genres</div>
+                <div class="info-content">{{ genres | join(', ') }}</div>
+            </div>
+            {% endif %}
+
+            {# Show write-review button when logged in #}
+            <div class="info-section">
+                {% if session.get('token') %}
+                    <form action="{{ url_for('write_review', movie_id=movie['id']) }}" method="get">
+                        <button type="submit" style="padding:10px 14px;border-radius:6px;background:#2a2a2a;color:white;border:none;cursor:pointer;">Write Review</button>
+                    </form>
+                {% else %}
+                    <a href="/" style="color:#ccc;">Log in to write a review</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

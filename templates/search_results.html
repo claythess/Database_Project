@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Search Results</title>
+    <style>body{background:#000;color:#fff;font-family:Arial,sans-serif;padding:20px}</style>
+  </head>
+  <body>
+    <h1>Search Results</h1>
+    {% if error %}
+      <p style="color:red">{{ error }}</p>
+    {% endif %}
+
+    {% if movies %}
+      <ul>
+      {% for m in movies %}
+        <li><a href="{{ url_for('movie_view', movie_id=m.id) }}">{{ m.title }} ({{ m.year }})</a></li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p>No movie found for "{{ query }}".</p>
+      <p><a href="/">Back to home</a></p>
+    {% endif %}
+  </body>
+</html>

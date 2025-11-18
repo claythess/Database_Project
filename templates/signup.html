@@ -103,7 +103,7 @@ height: auto;
 </head>
 <body>
 <div class="container">
-<img src="{{ url_for('static', filename='logo.png') }}" alt="Movie App Logo" class="logo">
+<img src="{{ url_for('static', filename='logo.png') }}" alt="Movie App Logo" class="logo" onclick="window.location.href='{{ url_for('myprofile') if session.get('token') else url_for('hello_world') }}'">
 <div class="signup-form">
 <form action="/signup_submit" method="POST">
 <div class="input-group">
