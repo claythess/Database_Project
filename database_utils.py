@@ -199,6 +199,19 @@ def get_movie_directors(movie_id):
     else:
         return []
     
+def get_movie_actors(movie_id):
+    sql = """select a.name from movie m 
+        join actor_movie ma on ma.movie_id = m.id
+        join actor a on ma.actor_id = a.id
+        where m.id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (movie_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return [i["name"] for i in ret]
+    else:
+        return []
+    
 def get_movie_genres(movie_id):
     sql = """select g.name from movie m 
         join genre_movie mg on mg.movie_id = m.id
@@ -252,6 +265,19 @@ def get_user_id(username):
     ret = cursor.fetchone()
     if ret:
         return ret['id']
+    else:
+        return None
+    
+def get_user_by_id(user_id) -> str:
+    """
+    Should only be used after verify user
+    """
+    sql = "select username from user where id = %s;"
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (user_id,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret['username']
     else:
         return None
 
@@ -331,7 +357,9 @@ if __name__ == "__main__":
     print(get_movie_genres(get_movie("Long Kiss Goodnight")["id"]))
     print(get_movie_production_company(get_movie("Long Kiss Goodnight")["id"]));'''
     
-    #insert_follow(get_user_id("yungmarsh"), get_user_id("mrpoopypants"))
+    #insert_follow(get_user_id("mrpoopypants"), get_user_id("yungmarsh"))
     print(get_followers(get_user_id("mrpoopypants")))
     print(get_followees(get_user_id("yungmarsh")))
     print(get_user_id_from_session(4))
+    print(get_movie_actors(get_movie("long kiss goodnight")['id']))
+    print(get_user_by_id(13))

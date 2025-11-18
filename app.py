@@ -43,7 +43,7 @@ def myprofile():
 @app.route('/movie/<int:movie_id>')
 def movie_view(movie_id):
     movie_data = database_utils.get_movie_by_id(movie_id)
-    
+    director_data = database_utils.get_movie_directors()
     if movie_data:
         return render_template('movie.html', movie=movie_data)
     else:
