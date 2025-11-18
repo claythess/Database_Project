@@ -20,6 +20,8 @@ alter table movie modify column language text;
 
 alter table movie modify column id int auto_increment;
 
+ALTER TABLE movie MODIFY COLUMN imdb_rating DECIMAL(3,1);
+
 create table director (
 	id int primary key,
     name text
