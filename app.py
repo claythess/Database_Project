@@ -3,6 +3,8 @@
 from flask import Flask, render_template, session, request, redirect, url_for
 import database_utils
 
+
+
 # Flask constructor takes the name of 
 # current module (__name__) as argument.
 app = Flask(__name__)
@@ -17,6 +19,7 @@ def login():
     password = request.form.get('password')
 
     if database_utils.verify_user(username, password):
+        session["token"] = database_utils.make_session(database_utils.get_user_id(username))
         return redirect(url_for('myprofile'))
     else:
         return render_template('login.html', error=True)
@@ -30,6 +33,7 @@ def signup_submit():
     username = request.form.get('username') 
     password = request.form.get('password')
     database_utils.make_user(username, password)
+    session["token"] = database_utils.make_session(database_utils.get_user_id(username))
     return redirect(url_for('hello_world'))
 
 @app.route('/myprofile')
@@ -49,4 +53,6 @@ if __name__ == '__main__':
 
     # run() method of Flask class runs the application 
     # on the local development server.
+    app.secret_key = database_utils.API_KEY # No one should know this except us
+    app.config['SESSION_TYPE'] = 'memcache'
     app.run()

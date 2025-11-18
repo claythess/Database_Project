@@ -155,8 +155,6 @@ def get_movie(title, year = None) -> dict:
             sql = """insert into genre_movie (movie_id, genre_id) values (%s, %s)"""
             cursor.execute(sql, (movie_id, genre_id))
         
-        
-        
         conn.commit()
         conn.autocommit=True
         
@@ -187,9 +185,62 @@ def get_movie_by_id(id) -> dict:
         return ret
     else:
         return None
+    
+def get_movie_directors(movie_id):
+    sql = """select d.name from movie m 
+        join director_movie md on md.movie_id = m.id
+        join director d on md.director_id = d.id
+        where m.id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (movie_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return [i["name"] for i in ret]
+    else:
+        return []
+    
+def get_movie_genres(movie_id):
+    sql = """select g.name from movie m 
+        join genre_movie mg on mg.movie_id = m.id
+        join genre g on mg.genre_id = g.id
+        where m.id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (movie_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return [i["name"] for i in ret]
+    else:
+        return []
+    
+def get_movie_production_company(movie_id):
+    sql = """select p.name from movie m 
+        join production_company_movie mp on mp.movie_id = m.id
+        join production_company p on mp.production_company_id = p.id
+        where m.id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (movie_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return [i["name"] for i in ret]
+    else:
+        return []
         
-def insert_review():
-    pass        
+def insert_review(user_id, movie_id, rating, review):
+    sql = """insert into movie_rating (user_id, movie_id, rating, review) values (%s, %s, %s, %s);"""
+    
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (user_id, movie_id, rating, review))
+    
+def get_user_reviews(user_id):
+    sql = """select * from movie_rating where user_id = %s order by created_at desc;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (user_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return ret
+    else:
+        return []
+     
 
 def get_user_id(username):
     """
@@ -204,6 +255,34 @@ def get_user_id(username):
     else:
         return None
 
+def insert_follow(follower_id, folowee_id):
+    sql = "insert into follow (follower_id, followee_id) values (%s, %s);"
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (follower_id, folowee_id))
+
+def get_followers(user_id):
+    sql = """select u.username from follow f
+            join user u on f.follower_id = u.id
+            where f.followee_id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (user_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return [i["username"] for i in ret]
+    else:
+        return []
+
+def get_followees(user_id):
+    sql = """select u.username from follow f
+            join user u on f.followee_id = u.id
+            where f.follower_id = %s;"""
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (user_id,))
+    ret = cursor.fetchall()
+    if ret:
+        return [i["username"] for i in ret]
+    else:
+        return []
 
 def make_user(username, password):
     sql = "insert into user (username) values (%s);"
@@ -228,10 +307,20 @@ def make_session(user_id):
     sql = """insert into session (user_id) values (%s)"""
     cursor = conn.cursor(dictionary=True)
     cursor.execute(sql, (user_id,))
-    
+    return cursor.lastrowid
     
 if __name__ == "__main__":
-    rows = get_movie("Avatar")
-    print(rows)
+    #rows = get_movie("Avatar")
+    #print(rows)
+    print(get_movie("Avatar"))
     
-    print(get_movie("The Godfather"))
+    # insert_review(get_user_id("mrpoopypants"),get_movie("Long Kiss Goodnight")["id"], 7, "Wow I just Love Sammy J!")
+    #print(get_movie("Austin Powers in Goldmember"))
+    '''print(get_user_reviews(get_user_id("mrpoopypants")))
+    print(get_movie_directors(get_movie("Long Kiss Goodnight")["id"]))
+    print(get_movie_genres(get_movie("Long Kiss Goodnight")["id"]))
+    print(get_movie_production_company(get_movie("Long Kiss Goodnight")["id"]));'''
+    
+    #insert_follow(get_user_id("yungmarsh"), get_user_id("mrpoopypants"))
+    print(get_followers(get_user_id("mrpoopypants")))
+    print(get_followees(get_user_id("yungmarsh")))
