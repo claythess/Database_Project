@@ -283,4 +283,4 @@ if __name__ == '__main__':
     # on the local development server.
     app.secret_key = database_utils.API_KEY # No one should know this except us
     app.config['SESSION_TYPE'] = 'memcache'
-    app.run()
+    app.run(host="0.0.0.0", port = 80)
