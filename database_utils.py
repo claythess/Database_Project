@@ -13,11 +13,14 @@ with open("PASSWORD",'r') as f:
     PASSWORD=f.read()
 
 def connect_db() -> mysql.connector.MySQLConnection:
+    #port=40861,
     return mysql.connector.connect(
-        host="75.188.18.208", 
-        port=40861,
+        host="192.168.1.224",
+        #host="75.188.18.208", 
+        port=3306,
+        #port=40861,
         user="root",
-        password=PASSWORD,
+        password="password",
         database="moviedb"
     )
     
