@@ -5,6 +5,7 @@ def process_json(json_rows, extract):
     for row in json_rows:
         row_list = extract(row)
         list_entries.extend(row_list)
+    list_entries = [entry.strip().title() for entry in list_entries]
     list_dedup = list(set(list_entries))
     return list_dedup
 
@@ -47,5 +48,13 @@ def extract_company(row):
     try:
         companies = json.loads(company_data)
         return [company["name"] for company in companies]
+    except:
+        return []
+
+def extract_crew(row):
+    crew_data = row['crew']
+    try:
+        crew = json.loads(crew_data)
+        return [p["name"] for p in crew if p.get("job") != "Director"]
     except:
         return []
