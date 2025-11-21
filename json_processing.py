@@ -25,6 +25,14 @@ def extract_actor(row):
         return [p["name"] for p in cast]
     except:
         return []
+    
+def extract_actor_character(row):
+    cast_data = row['cast']
+    try:
+        cast = json.loads(cast_data)
+        return [(p.get("name"), p.get("character", "")) for p in cast]
+    except:
+        return []
 
 def extract_genre(row):
     genres_data = row['genres']

@@ -15,11 +15,8 @@ create table movie (
     imdb_rating decimal(2,1),
     year int
 );
-
 alter table movie modify column language text;
-
 alter table movie modify column id int auto_increment;
-
 ALTER TABLE movie MODIFY COLUMN imdb_rating DECIMAL(3,1);
 
 create table director (
@@ -87,7 +84,6 @@ create table production_company_movie (
     foreign key (production_company_id) references production_company(id),
     FOREIGN KEY (movie_id) references movie(id)
 );
-
 
 -- User Stuff
 
