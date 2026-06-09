@@ -8,9 +8,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 with open("API-KEY",'r') as f:
     API_KEY=f.read()
-    
-with open("PASSWORD",'r') as f:
-    PASSWORD=f.read()
+
 
 def connect_db() -> sqlite3.Connection:
     con = sqlite3.connect('movie.db', check_same_thread=False, isolation_level=None)
@@ -18,7 +16,6 @@ def connect_db() -> sqlite3.Connection:
     return con
     
 conn = connect_db()
-
 def make_hash(key):
     m = hashlib.sha256()
     m.update(key.encode("utf-8"))
@@ -110,6 +107,7 @@ def get_movie(title, year = None) -> dict:
         if status != 200:
             return None
         # Insert stuff into movie
+        print(movie_data)
         title = movie_data["Title"]
         year = int(movie_data["Year"])
         language = movie_data["Language"]
@@ -491,3 +489,5 @@ if __name__ == "__main__":
     print(get_user_id_from_session(4))
     print(get_movie_actors(get_movie("long kiss goodnight")['id']))
     print(get_user_by_id(13))
+    
+    print(get_movie("Hell or Highwater", 2016))
