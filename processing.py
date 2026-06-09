@@ -1,13 +1,10 @@
-import mysql.connector
+import sqlite3
 from pprint import pprint
 
 def connect_db():
-    return mysql.connector.connect(
-        host="192.168.1.224",
-        user="root",
-        password="password",
-        database="moviedb"
-    )
+    con = sqlite3.connect('movie.db')
+    con.row_factory = sqlite3.Row  
+    return con
 
 def query_json(conn):
     sql = """
@@ -15,7 +12,7 @@ def query_json(conn):
     from staging_imdb
     limit 1
     """
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
     cursor.close()

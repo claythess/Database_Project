@@ -1,29 +1,17 @@
-create database moviedb;
-
-use moviedb;
-
-select count(*) from movie;
-
-drop table staging_imdb_movies;
-
 create table movie (
-	id int primary key,
+	id integer primary key AUTOINCREMENT,
     title text,
-    language varchar(10),
+    language text,
     image_url text,
     budget bigint,
-    imdb_rating decimal(2,1),
+    imdb_rating decimal(3,1),
     year int
 );
-alter table movie modify column language text;
-alter table movie modify column id int auto_increment;
-ALTER TABLE movie MODIFY COLUMN imdb_rating DECIMAL(3,1);
 
 create table director (
-	id int primary key,
+	id integer primary key AUTOINCREMENT,
     name text
 );
-alter table director modify column id int auto_increment;
 
 create table director_movie (
 	director_id int,
@@ -33,10 +21,9 @@ create table director_movie (
 );
 
 create table genre (
-	id int primary key,
+	id integer primary key AUTOINCREMENT,
     name text
 );
-alter table genre modify column id int auto_increment;
 
 create table genre_movie (
 	genre_id int,
@@ -46,10 +33,9 @@ create table genre_movie (
 );
 
 create table actor (
-	id int primary key,
+	id integer primary key AUTOINCREMENT,
     name text
 );
-alter table actor modify column id int auto_increment;
 
 create table actor_movie (
 	actor_id int,
@@ -60,10 +46,9 @@ create table actor_movie (
 );
 
 create table crew (
-	id int primary key,
+	id integer primary key AUTOINCREMENT,
     name text
 );
-alter table crew modify column id int auto_increment;
 
 create table crew_movie (
 	crew_id int,
@@ -73,10 +58,9 @@ create table crew_movie (
 );
 
 create table production_company (
-	id int primary key,
+	id integer primary key AUTOINCREMENT,
     name text
 );
-alter table production_company modify column id int auto_increment;
 
 create table production_company_movie (
 	production_company_id int,
@@ -85,16 +69,11 @@ create table production_company_movie (
     FOREIGN KEY (movie_id) references movie(id)
 );
 
--- User Stuff
-
 create table user (
-	id int primary key,
-    username text
+	id integer primary key AUTOINCREMENT,
+    username text unique
 );
 
-alter table user modify column id int auto_increment;
-
-alter table user modify column username text unique;
 
 create table user_password (
 	user_id int,
@@ -104,13 +83,12 @@ create table user_password (
 
 
 create table session (
-	id int primary key,
+	id integer primary key AUTOINCREMENT,
     user_id int,
     created_at datetime not null default current_timestamp,
     foreign key (user_id) references user(id)
 );
 
-alter table session modify column id int auto_increment;
 
 create table follow (
 	follower_id int,
@@ -125,11 +103,12 @@ create table movie_rating (
     movie_id int,
     rating decimal(3,1),
     review text,
+    created_at datetime not null default current_timestamp,
     foreign key (user_id) references user(id),
     foreign key (movie_id) references movie(id)
+    
 );
 
-alter table movie_rating add column created_at datetime not null default current_timestamp;
 
 create table favorite_director (
 	user_id int,

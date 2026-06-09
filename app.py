@@ -48,22 +48,24 @@ def myprofile():
         return redirect(url_for('hello_world'))
 
     username = database_utils.get_user_by_id(user_id)
-    reviews = database_utils.get_user_reviews(user_id)
+    reviews = list(database_utils.get_user_reviews(user_id))
     favorite_actor = database_utils.get_favorite_actor(user_id)
     favorite_director = database_utils.get_favorite_director(user_id)
     # Enrich reviews with movie data (title, year) for template
     enriched = []
     for r in reviews:
+        r = dict(r)
         movie = None
         try:
-            movie = database_utils.get_movie_by_id(r.get('movie_id'))
+            movie = dict(database_utils.get_movie_by_id(r.get('movie_id')))
+           
         except Exception:
             movie = None
         r['movie'] = movie
         enriched.append(r)
 
-    followers = database_utils.get_followers(user_id)
-    followees = database_utils.get_followees(user_id)
+    followers = list(database_utils.get_followers(user_id))
+    followees = list(database_utils.get_followees(user_id))
 
     return render_template('myprofile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, followers=followers, followees=followees)
 
@@ -153,6 +155,7 @@ def user_profile(username):
     reviews = database_utils.get_user_reviews(uid)
     enriched = []
     for r in reviews:
+        r = dict(r)
         movie = None
         try:
             movie = database_utils.get_movie_by_id(r.get('movie_id'))
@@ -283,4 +286,4 @@ if __name__ == '__main__':
     # on the local development server.
     app.secret_key = database_utils.API_KEY # No one should know this except us
     app.config['SESSION_TYPE'] = 'memcache'
-    app.run(host="0.0.0.0", port = 80)
+    app.run(host="0.0.0.0", port = 8080)

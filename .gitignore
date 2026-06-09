@@ -1,2 +1,4 @@
 API-KEY
 PASSWORD
+__pycache__
+movie.db
