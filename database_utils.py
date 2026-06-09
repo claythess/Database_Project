@@ -103,20 +103,28 @@ def get_movie(title, year = None) -> dict:
         status, movie_data = get_movie_api(title, year)
         logging.debug(status)
         logging.debug(movie_data)
-        
-        if status != 200:
+
+        if status != 200 or not movie_data or movie_data.get('Response', 'True') == 'False':
             return None
-        # Insert stuff into movie
-        print(movie_data)
-        title = movie_data["Title"]
-        year = int(movie_data["Year"])
-        language = movie_data["Language"]
-        image_url = movie_data["Poster"]
-        imdbRating = movie_data["imdbRating"]
-        
+
+        title_field = movie_data.get('Title')
+        year_field = movie_data.get('Year')
+        language = movie_data.get('Language')
+        image_url = movie_data.get('Poster')
+        imdbRating = movie_data.get('imdbRating')
+
+        if not title_field or not year_field or not language:
+            return None
+
+        try:
+            year = int(year_field)
+        except (ValueError, TypeError):
+            return None
+
         #conn.autocommit = False
         
-        sql = """insert into movie (title, language, image_url, imdb_rating, year) values (?, ?, ?, nullif(?,"N/A"), ?)"""
+        sql = """insert into movie (title, language, image_url, imdb_rating, year) values (?, ?, ?, nullif(?,'N/A'), ?)"""
+        title = title_field
         cursor.execute(sql, (title, language, image_url, imdbRating, year))
         movie_id = cursor.lastrowid
         
@@ -165,7 +173,7 @@ def get_movie_by_id(id) -> dict:
     cursor.execute(sql, (id,))
     
     ret = cursor.fetchone()
-    logging.debug(ret)
+    #logging.debug(ret)
     if ret:
         if ret["image_url"] == None:
             logging.debug("No Image URL, Fetching")
@@ -273,11 +281,19 @@ def get_director_by_id(director_id):
     cursor.execute(sql, (director_id,))
     return cursor.fetchone()
 
-def get_movies_by_actor(actor_id):
-    sql = """select m.id, m.title, m.year, m.image_url from movie m
+def get_movies_by_actor(actor_id, sort_by='title', order='asc'):
+    sort_columns = {
+        'title': 'm.title',
+        'rating': 'm.imdb_rating',
+        'date_added': 'm.id'
+    }
+    sort_column = sort_columns.get(sort_by, 'm.title')
+    order_direction = 'ASC' if str(order).lower() == 'asc' else 'DESC'
+
+    sql = f"""select m.id, m.title, m.year, m.image_url, m.imdb_rating from movie m
         join actor_movie am on am.movie_id = m.id
         where am.actor_id = ?
-        order by m.year desc;"""
+        order by {sort_column} {order_direction};"""
     cursor = conn.cursor()
     cursor.execute(sql, (actor_id,))
     ret = cursor.fetchall()
@@ -286,11 +302,19 @@ def get_movies_by_actor(actor_id):
     else:
         return []
 
-def get_movies_by_director(director_id):
-    sql = """select m.id, m.title, m.year, m.image_url from movie m
+def get_movies_by_director(director_id, sort_by='title', order='asc'):
+    sort_columns = {
+        'title': 'm.title',
+        'rating': 'm.imdb_rating',
+        'date_added': 'm.id'
+    }
+    sort_column = sort_columns.get(sort_by, 'm.title')
+    order_direction = 'ASC' if str(order).lower() == 'asc' else 'DESC'
+
+    sql = f"""select m.id, m.title, m.year, m.image_url, m.imdb_rating from movie m
         join director_movie dm on dm.movie_id = m.id
         where dm.director_id = ?
-        order by m.year desc;"""
+        order by {sort_column} {order_direction};"""
     cursor = conn.cursor()
     cursor.execute(sql, (director_id,))
     ret = cursor.fetchall()
@@ -306,7 +330,7 @@ def insert_review(user_id, movie_id, rating, review):
     cursor.execute(sql, (user_id, movie_id, rating, review))
     
 def get_user_reviews(user_id):
-    sql = """select * from movie_rating where user_id = ? order by created_at desc;"""
+    sql = """select rowid as review_id, * from movie_rating where user_id = ? order by created_at desc;"""
     cursor = conn.cursor()
     cursor.execute(sql, (user_id,))
     ret = cursor.fetchall()
@@ -314,6 +338,26 @@ def get_user_reviews(user_id):
         return ret
     else:
         return []
+
+
+def get_review_by_id(review_id):
+    sql = """select rowid as review_id, * from movie_rating where rowid = ?;"""
+    cursor = conn.cursor()
+    cursor.execute(sql, (review_id,))
+    return cursor.fetchone()
+
+
+def update_review(review_id, rating, review):
+    sql = """update movie_rating set rating = ?, review = ? where rowid = ?;"""
+    cursor = conn.cursor()
+    cursor.execute(sql, (rating, review, review_id))
+
+
+def delete_review(review_id):
+    sql = """delete from movie_rating where rowid = ?;"""
+    cursor = conn.cursor()
+    cursor.execute(sql, (review_id,))
+
 
 
 def get_favorite_actor(user_id):
@@ -450,7 +494,7 @@ def verify_user(username, password):
     cursor = conn.cursor()
     cursor.execute(sql, (username,))
     ret = cursor.fetchone()
-    print(ret)
+    #print(ret)
     if ret == None:
         return False
     return ret['password_hash'] == make_hash(password)

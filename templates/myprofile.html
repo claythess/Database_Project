@@ -160,6 +160,9 @@ body {
         </div>
         <div class="profile-section">
             <h2>{{ username or 'My Profile' }}</h2>
+            <div style="margin-top:8px;font-size:16px;color:#ccc;">
+                Movies seen: <strong>{{ movies_seen }}</strong>
+            </div>
         </div>
 
         <div class="profile-section">
@@ -194,11 +197,29 @@ body {
 
         <div class="profile-section">
             <h2>Recent Reviews</h2>
+            <form method="get" style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                <label style="font-size:14px;color:#ccc;">
+                    Sort by
+                    <select name="sort_by" style="margin-left:6px;padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+                        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Alphabetical</option>
+                        <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Rating</option>
+                        <option value="date_added" {% if sort_by == 'date_added' %}selected{% endif %}>Date Added</option>
+                    </select>
+                </label>
+                <label style="font-size:14px;color:#ccc;">
+                    Order
+                    <select name="order" style="margin-left:6px;padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+                        <option value="asc" {% if order == 'asc' %}selected{% endif %}>Ascending</option>
+                        <option value="desc" {% if order == 'desc' %}selected{% endif %}>Descending</option>
+                    </select>
+                </label>
+                <button type="submit" class="logout-btn" style="position:static;display:inline-block;margin-left:0;padding:8px 14px;">Sort</button>
+            </form>
             <div class="reviews-grid">
                 {% if reviews and reviews|length > 0 %}
                     {% for r in reviews %}
                         <div class="review-box" style="align-items:flex-start;justify-content:flex-start;">
-                            <div>
+                            <div style="width:100%;">
                                 <div style="font-weight:bold;margin-bottom:6px;">
                                     {% if r.movie %}
                                         <a href="{{ url_for('movie_view', movie_id=r.movie['id']) }}" style="color:#fff;text-decoration:none">{{ r.movie['title'] }}</a>
@@ -210,8 +231,16 @@ body {
                                 <div style="color:#ffd700;margin-bottom:6px;">Rating: {{ r['rating'] }}</div>
                                 <div style="margin-bottom:8px;">{{ r['review'] }}</div>
                                 {% if r.get('created_at') %}
-                                    <div style="font-size:12px;color:#888;">{{ r['created_at'] }}</div>
+                                    <div style="font-size:12px;color:#888;margin-bottom:10px;">Added: {{ r['created_at'] }}</div>
                                 {% endif %}
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <a href="{{ url_for('edit_review', review_id=r.review_id, sort_by=sort_by, order=order) }}" style="padding:8px 10px;border-radius:6px;background:#2a2a2a;color:white;text-decoration:none;">Edit</a>
+                                    <form action="{{ url_for('delete_review', review_id=r.review_id) }}" method="post" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this review?');">
+                                        <input type="hidden" name="sort_by" value="{{ sort_by }}">
+                                        <input type="hidden" name="order" value="{{ order }}">
+                                        <button type="submit" style="padding:8px 10px;border-radius:6px;background:#660000;color:white;border:none;cursor:pointer;">Delete</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}

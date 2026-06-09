@@ -47,10 +47,16 @@ def myprofile():
     if user_id is None:
         return redirect(url_for('hello_world'))
 
+    sort_by = request.args.get('sort_by', 'date_added')
+    order = request.args.get('order', 'desc')
+
     username = database_utils.get_user_by_id(user_id)
     reviews = list(database_utils.get_user_reviews(user_id))
     favorite_actor = database_utils.get_favorite_actor(user_id)
     favorite_director = database_utils.get_favorite_director(user_id)
+    # Count unique movies the user has reviewed as movies seen
+    movies_seen = len({r['movie_id'] for r in reviews if r['movie_id'] is not None})
+
     # Enrich reviews with movie data (title, year) for template
     enriched = []
     for r in reviews:
@@ -58,16 +64,33 @@ def myprofile():
         movie = None
         try:
             movie = dict(database_utils.get_movie_by_id(r.get('movie_id')))
-           
         except Exception:
             movie = None
         r['movie'] = movie
         enriched.append(r)
 
+    if sort_by == 'title':
+        enriched.sort(key=lambda r: (r['movie']['title'].lower() if r['movie'] and r['movie'].get('title') else ''), reverse=(order == 'desc'))
+    elif sort_by == 'rating':
+        enriched.sort(key=lambda r: (float(r['rating']) if r['rating'] is not None else -1), reverse=(order == 'desc'))
+    else:
+        enriched.sort(key=lambda r: (r.get('created_at') or ''), reverse=(order == 'desc'))
+
     followers = list(database_utils.get_followers(user_id))
     followees = list(database_utils.get_followees(user_id))
 
-    return render_template('myprofile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, followers=followers, followees=followees)
+    return render_template(
+        'myprofile.html',
+        username=username,
+        reviews=enriched,
+        favorite_actor=favorite_actor,
+        favorite_director=favorite_director,
+        followers=followers,
+        followees=followees,
+        movies_seen=movies_seen,
+        sort_by=sort_by,
+        order=order,
+    )
 
 @app.route('/movie/<int:movie_id>')
 def movie_view(movie_id):
@@ -122,6 +145,85 @@ def write_review(movie_id):
     database_utils.insert_review(user_id, movie_id, rating, review_text)
 
     return redirect(url_for('movie_view', movie_id=movie_id))
+
+
+@app.route('/review/<int:review_id>/edit', methods=['GET', 'POST'])
+def edit_review(review_id):
+    token = session.get('token')
+    if not token:
+        return redirect(url_for('hello_world'))
+
+    user_id = database_utils.get_user_id_from_session(token)
+    if user_id is None:
+        return redirect(url_for('hello_world'))
+
+    review = database_utils.get_review_by_id(review_id)
+    if not review or review['user_id'] != user_id:
+        return "Review not found", 404
+
+    movie_data = database_utils.get_movie_by_id(review['movie_id'])
+    if not movie_data:
+        return "Movie not found", 404
+
+    sort_by = request.args.get('sort_by') or request.form.get('sort_by', 'date_added')
+    order = request.args.get('order') or request.form.get('order', 'desc')
+
+    if request.method == 'GET':
+        return render_template(
+            'write_review.html',
+            movie=movie_data,
+            rating=review['rating'],
+            review_text=review['review'],
+            edit_mode=True,
+            review_id=review_id,
+            sort_by=sort_by,
+            order=order,
+        )
+
+    rating_raw = request.form.get('rating')
+    review_text = request.form.get('review')
+
+    try:
+        rating = float(rating_raw) if rating_raw is not None and rating_raw != '' else None
+    except ValueError:
+        rating = None
+
+    if rating is None or rating < 0.0 or rating > 10.0:
+        error_msg = "Rating must be a number between 0 and 10"
+        return render_template(
+            'write_review.html',
+            movie=movie_data,
+            error=error_msg,
+            rating=rating_raw,
+            review_text=review_text,
+            edit_mode=True,
+            review_id=review_id,
+            sort_by=sort_by,
+            order=order,
+        ), 400
+
+    database_utils.update_review(review_id, rating, review_text)
+    return redirect(url_for('myprofile', sort_by=sort_by, order=order))
+
+
+@app.route('/review/<int:review_id>/delete', methods=['POST'])
+def delete_review(review_id):
+    token = session.get('token')
+    if not token:
+        return redirect(url_for('hello_world'))
+
+    user_id = database_utils.get_user_id_from_session(token)
+    if user_id is None:
+        return redirect(url_for('hello_world'))
+
+    review = database_utils.get_review_by_id(review_id)
+    if not review or review['user_id'] != user_id:
+        return "Review not found", 404
+
+    sort_by = request.form.get('sort_by', 'date_added')
+    order = request.form.get('order', 'desc')
+    database_utils.delete_review(review_id)
+    return redirect(url_for('myprofile', sort_by=sort_by, order=order))
 
 
 @app.route('/search', methods=['POST'])
@@ -190,8 +292,10 @@ def actor_view(actor_id):
     if not actor:
         return "Actor not found", 404
 
-    movies = database_utils.get_movies_by_actor(actor_id)
-    return render_template('actor.html', actor=actor, movies=movies)
+    sort_by = request.args.get('sort_by', 'title')
+    order = request.args.get('order', 'asc')
+    movies = database_utils.get_movies_by_actor(actor_id, sort_by=sort_by, order=order)
+    return render_template('actor.html', actor=actor, movies=movies, sort_by=sort_by, order=order)
 
 
 @app.route('/director/<int:director_id>')
@@ -200,8 +304,10 @@ def director_view(director_id):
     if not director:
         return "Director not found", 404
 
-    movies = database_utils.get_movies_by_director(director_id)
-    return render_template('director.html', director=director, movies=movies)
+    sort_by = request.args.get('sort_by', 'title')
+    order = request.args.get('order', 'asc')
+    movies = database_utils.get_movies_by_director(director_id, sort_by=sort_by, order=order)
+    return render_template('director.html', director=director, movies=movies, sort_by=sort_by, order=order)
 
 
 @app.route('/set_favorite_actor', methods=['POST'])

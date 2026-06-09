@@ -20,7 +20,7 @@
       </ul>
     {% else %}
       <p>No movie found for "{{ query }}".</p>
-      <p><a href="/">Back to home</a></p>
+      <p><a href="{{ url_for('myprofile') if session.get('token') else url_for('hello_world') }}">Back to home</a></p>
     {% endif %}
   </body>
 </html>

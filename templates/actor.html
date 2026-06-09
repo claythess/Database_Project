@@ -23,6 +23,24 @@
     <div class="card">
       <h2>{{ actor.name }}</h2>
       <h3 style="margin-top:16px">Filmography</h3>
+      <form method="get" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <label style="font-size:14px;color:#ccc;">
+          Sort by
+          <select name="sort_by" style="margin-left:6px;padding:6px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Alphabetical</option>
+            <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Rating</option>
+            <option value="date_added" {% if sort_by == 'date_added' %}selected{% endif %}>Date Added</option>
+          </select>
+        </label>
+        <label style="font-size:14px;color:#ccc;">
+          Order
+          <select name="order" style="margin-left:6px;padding:6px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+            <option value="asc" {% if order == 'asc' %}selected{% endif %}>Ascending</option>
+            <option value="desc" {% if order == 'desc' %}selected{% endif %}>Descending</option>
+          </select>
+        </label>
+        <button type="submit" style="padding:8px 14px;background:#2a2a2a;color:white;border:none;border-radius:4px;cursor:pointer;">Sort</button>
+      </form>
       <div class="movies-grid">
         {% if movies and movies|length > 0 %}
           {% for m in movies %}
@@ -30,6 +48,7 @@
               <a class="movie-link" href="{{ url_for('movie_view', movie_id=m.id) }}">
                 <div style="font-weight:bold">{{ m.title }}</div>
                 {% if m.year %}<div style="color:#888">{{ m.year }}</div>{% endif %}
+                {% if m.imdb_rating %}<div style="color:#ccc;margin-top:6px;">Rating: {{ m.imdb_rating }}</div>{% endif %}
               </a>
             </div>
           {% endfor %}
