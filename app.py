@@ -254,6 +254,9 @@ def user_profile(username):
     if not uid:
         return "User not found", 404
 
+    sort_by = request.args.get('sort_by', 'date_added')
+    order = request.args.get('order', 'desc')
+
     reviews = database_utils.get_user_reviews(uid)
     enriched = []
     for r in reviews:
@@ -265,6 +268,13 @@ def user_profile(username):
             movie = None
         r['movie'] = movie
         enriched.append(r)
+
+    if sort_by == 'title':
+        enriched.sort(key=lambda r: (r['movie']['title'].lower() if r['movie'] and r['movie'].get('title') else ''), reverse=(order == 'desc'))
+    elif sort_by == 'rating':
+        enriched.sort(key=lambda r: (float(r['rating']) if r['rating'] is not None else -1), reverse=(order == 'desc'))
+    else:
+        enriched.sort(key=lambda r: (r.get('created_at') or ''), reverse=(order == 'desc'))
 
     favorite_actor = database_utils.get_favorite_actor(uid)
     favorite_director = database_utils.get_favorite_director(uid)

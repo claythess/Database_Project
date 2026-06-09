@@ -49,6 +49,24 @@
       {% endif %}
 
       <h3 style="margin-top:20px">Recent Reviews</h3>
+      <form method="get" style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <label style="font-size:14px;color:#ccc;">
+          Sort by
+          <select name="sort_by" style="margin-left:6px;padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Alphabetical</option>
+            <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Rating</option>
+            <option value="date_added" {% if sort_by == 'date_added' %}selected{% endif %}>Date Added</option>
+          </select>
+        </label>
+        <label style="font-size:14px;color:#ccc;">
+          Order
+          <select name="order" style="margin-left:6px;padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+            <option value="asc" {% if order == 'asc' %}selected{% endif %}>Ascending</option>
+            <option value="desc" {% if order == 'desc' %}selected{% endif %}>Descending</option>
+          </select>
+        </label>
+        <button type="submit" style="padding:8px 14px;background:#2a2a2a;color:white;border:none;border-radius:4px;cursor:pointer;">Sort</button>
+      </form>
       <div class="reviews-grid">
         {% if reviews and reviews|length > 0 %}
           {% for r in reviews %}
