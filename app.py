@@ -258,6 +258,7 @@ def user_profile(username):
     order = request.args.get('order', 'desc')
 
     reviews = database_utils.get_user_reviews(uid)
+    movies_seen = len({r['movie_id'] for r in reviews if r['movie_id'] is not None})
     enriched = []
     for r in reviews:
         r = dict(r)
@@ -293,7 +294,7 @@ def user_profile(username):
         if cf and username in cf:
             is_following = True
 
-    return render_template('user_profile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, is_owner=is_owner, is_following=is_following)
+    return render_template('user_profile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, is_owner=is_owner, is_following=is_following, movies_seen=movies_seen, sort_by=sort_by, order=order)
 
 
 @app.route('/actor/<int:actor_id>')

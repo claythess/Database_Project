@@ -22,6 +22,7 @@
   <div class="container">
     <div class="card">
       <h2>{{ username }}</h2>
+      <p>Movies seen: <span class="fav">{{ movies_seen }}</span></p>
       <p>Favorite Actor: {% if favorite_actor %}<a class="fav" href="{{ url_for('actor_view', actor_id=favorite_actor.id) }}">{{ favorite_actor.name }}</a>{% else %}—{% endif %}</p>
       <p>Favorite Director: {% if favorite_director %}<a class="fav" href="{{ url_for('director_view', director_id=favorite_director.id) }}">{{ favorite_director.name }}</a>{% else %}—{% endif %}</p>
 
