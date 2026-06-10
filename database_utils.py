@@ -7,7 +7,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 with open("API-KEY",'r') as f:
-    API_KEY=f.read()
+    API_KEY=f.read().strip()
+    
 
 
 def connect_db() -> sqlite3.Connection:
