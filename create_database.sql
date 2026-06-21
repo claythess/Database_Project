@@ -124,5 +124,17 @@ create table favorite_actor (
     foreign key (actor_id) references actor(id)
 );
 
+create table movie_quote (
+	id integer primary key AUTOINCREMENT,
+    quote text not null
+);
+
+create table favorite_movie_quote (
+	user_id int,
+    quote_id int,
+    foreign key (user_id) references user(id),
+    foreign key (quote_id) references movie_quote(id)
+);
+
 
 

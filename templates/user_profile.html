@@ -25,6 +25,7 @@
       <p>Movies seen: <span class="fav">{{ movies_seen }}</span></p>
       <p>Favorite Actor: {% if favorite_actor %}<a class="fav" href="{{ url_for('actor_view', actor_id=favorite_actor.id) }}">{{ favorite_actor.name }}</a>{% else %}—{% endif %}</p>
       <p>Favorite Director: {% if favorite_director %}<a class="fav" href="{{ url_for('director_view', director_id=favorite_director.id) }}">{{ favorite_director.name }}</a>{% else %}—{% endif %}</p>
+      <p>Favorite Movie Quote: {% if favorite_movie_quote %}<span class="fav" style="font-style:italic;">"{{ favorite_movie_quote.quote }}"</span>{% else %}—{% endif %}</p>
 
       {% if is_owner %}
         <form action="/set_favorite_actor" method="post" style="margin-top:10px;">
@@ -34,6 +35,10 @@
         <form action="/set_favorite_director" method="post" style="margin-top:8px;">
           <input type="text" name="director" placeholder="Set favorite director (name)" style="padding:8px;border-radius:6px;background:#111;border:1px solid #222;color:#fff">
           <button type="submit" style="padding:8px 12px;margin-left:8px">Set Director</button>
+        </form>
+        <form action="/set_favorite_movie_quote" method="post" style="margin-top:8px;">
+          <input type="text" name="movie_quote" placeholder="Set favorite movie quote" style="padding:8px;border-radius:6px;background:#111;border:1px solid #222;color:#fff;width:300px">
+          <button type="submit" style="padding:8px 12px;margin-left:8px">Set Quote</button>
         </form>
       {% else %}
         {% if is_following %}

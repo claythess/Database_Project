@@ -411,8 +411,50 @@ def set_favorite_director_by_name(user_id, director_name):
     cursor.execute(sql, (user_id,))
     sql = "insert into favorite_director (user_id, director_id) values (?, ?)"
     cursor.execute(sql, (user_id, director_id))
-     
 
+
+def get_favorite_movie_quote(user_id):
+    sql = """select mq.id, mq.quote from favorite_movie_quote fmq join movie_quote mq on fmq.quote_id = mq.id where fmq.user_id = ? limit 1;"""
+    cursor = conn.cursor()
+    cursor.execute(sql, (user_id,))
+    ret = cursor.fetchone()
+    if ret:
+        return ret
+    else:
+        return None
+
+
+def set_favorite_movie_quote(user_id, quote_text):
+    """
+    Sets or updates a user's favorite movie quote.
+    Creates the quote if it doesn't exist.
+    """
+    quote_text = quote_text.strip()
+    if not quote_text:
+        return
+    
+    cursor = conn.cursor()
+    
+    # Check if quote already exists
+    sql = "select id from movie_quote where quote = ? limit 1"
+    cursor.execute(sql, (quote_text,))
+    quote_row = cursor.fetchone()
+    
+    if quote_row:
+        quote_id = quote_row['id']
+    else:
+        # Insert new quote
+        sql = "insert into movie_quote (quote) values (?)"
+        cursor.execute(sql, (quote_text,))
+        quote_id = cursor.lastrowid
+    
+    # Remove existing favorite quote and insert new one
+    sql = "delete from favorite_movie_quote where user_id = ?"
+    cursor.execute(sql, (user_id,))
+    sql = "insert into favorite_movie_quote (user_id, quote_id) values (?, ?)"
+    cursor.execute(sql, (user_id, quote_id))
+
+ 
 def get_user_id(username):
     """
     Should only be used after verify user

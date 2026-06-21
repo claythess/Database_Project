@@ -183,6 +183,14 @@ body {
                     <span>—</span>
                 {% endif %}
             </div>
+            <div style="margin-bottom:12px">
+                <strong>Movie Quote:</strong>
+                {% if favorite_movie_quote %}
+                    <span style="color:#ffd700;font-style:italic;">"{{ favorite_movie_quote.quote }}"</span>
+                {% else %}
+                    <span>—</span>
+                {% endif %}
+            </div>
 
             <form action="/set_favorite_actor" method="post" style="margin-top:8px;">
                 <input type="text" name="actor" placeholder="Set favorite actor (name)" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
@@ -192,6 +200,11 @@ body {
             <form action="/set_favorite_director" method="post" style="margin-top:8px;">
                 <input type="text" name="director" placeholder="Set favorite director (name)" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
                 <button type="submit" class="logout-btn" style="position:static;display:inline-block;margin-left:8px;padding:8px 12px;">Set Director</button>
+            </form>
+
+            <form action="/set_favorite_movie_quote" method="post" style="margin-top:8px;">
+                <input type="text" name="movie_quote" placeholder="Set favorite movie quote" style="padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;width:300px;">
+                <button type="submit" class="logout-btn" style="position:static;display:inline-block;margin-left:8px;padding:8px 12px;">Set Quote</button>
             </form>
         </div>
 

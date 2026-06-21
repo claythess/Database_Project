@@ -54,6 +54,7 @@ def myprofile():
     reviews = list(database_utils.get_user_reviews(user_id))
     favorite_actor = database_utils.get_favorite_actor(user_id)
     favorite_director = database_utils.get_favorite_director(user_id)
+    favorite_movie_quote = database_utils.get_favorite_movie_quote(user_id)
     # Count unique movies the user has reviewed as movies seen
     movies_seen = len({r['movie_id'] for r in reviews if r['movie_id'] is not None})
 
@@ -85,6 +86,7 @@ def myprofile():
         reviews=enriched,
         favorite_actor=favorite_actor,
         favorite_director=favorite_director,
+        favorite_movie_quote=favorite_movie_quote,
         followers=followers,
         followees=followees,
         movies_seen=movies_seen,
@@ -279,6 +281,7 @@ def user_profile(username):
 
     favorite_actor = database_utils.get_favorite_actor(uid)
     favorite_director = database_utils.get_favorite_director(uid)
+    favorite_movie_quote = database_utils.get_favorite_movie_quote(uid)
 
     current_user_id = None
     token = session.get('token')
@@ -294,7 +297,7 @@ def user_profile(username):
         if cf and username in cf:
             is_following = True
 
-    return render_template('user_profile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, is_owner=is_owner, is_following=is_following, movies_seen=movies_seen, sort_by=sort_by, order=order)
+    return render_template('user_profile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, favorite_movie_quote=favorite_movie_quote, is_owner=is_owner, is_following=is_following, movies_seen=movies_seen, sort_by=sort_by, order=order)
 
 
 @app.route('/actor/<int:actor_id>')
@@ -349,6 +352,22 @@ def set_favorite_director():
     director_name = request.form.get('director')
     if director_name and director_name.strip() != '':
         database_utils.set_favorite_director_by_name(user_id, director_name.strip())
+
+    return redirect(url_for('myprofile'))
+
+
+@app.route('/set_favorite_movie_quote', methods=['POST'])
+def set_favorite_movie_quote():
+    token = session.get('token')
+    if not token:
+        return redirect(url_for('hello_world'))
+    user_id = database_utils.get_user_id_from_session(token)
+    if user_id is None:
+        return redirect(url_for('hello_world'))
+
+    movie_quote = request.form.get('movie_quote')
+    if movie_quote and movie_quote.strip() != '':
+        database_utils.set_favorite_movie_quote(user_id, movie_quote.strip())
 
     return redirect(url_for('myprofile'))
 
