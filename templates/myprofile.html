@@ -267,17 +267,5 @@ body {
     </div>
 </div>
 
-<img src="{{ url_for('static', filename='koala.png') }}" alt="Koala" class="koala-corner" onclick="playLaugh()" style="cursor: pointer;">
-
-<audio id="laughSound">
-    <source src="{{ url_for('static', filename='laugh.wav') }}" type="audio/mpeg">
-</audio>
-
-<script>
-function playLaugh() {
-    var audio = document.getElementById('laughSound');
-    audio.play();
-}
-</script>
 </body>
 </html>
