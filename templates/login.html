@@ -89,14 +89,6 @@ margin-top: 15px;
 .signup-btn:hover {
 background-color: #252525;
         }
-.koala-corner {
-position: fixed;
-bottom: 20px;
-right: 20px;
-max-width: 150px;
-width: 100%;
-height: auto;
-        }
 </style>
 </head>
 <body>
@@ -117,18 +109,6 @@ height: auto;
 <button class="signup-btn" type="button" onclick="window.location.href='/signup'">No account? Sign up</button>
 </div>
 </div>
-<img src="{{ url_for('static', filename='koala.png') }}" alt="Koala" class="koala-corner" onclick="playLaugh()" style="cursor: pointer;">
-
-<audio id="laughSound">
-    <source src="{{ url_for('static', filename='laugh.wav') }}" type="audio/mpeg">
-</audio>
-
-<script>
-function playLaugh() {
-    var audio = document.getElementById('laughSound');
-    audio.play();
-}
-</script>
 {% if error %}
 <script>
     alert('Incorrect username or password');

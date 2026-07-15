@@ -17,7 +17,6 @@
     .btn.secondary { background:transparent; color:#ccc; border:1px solid #222; margin-left:8px }
     .movie-title { font-size:22px; margin-bottom:6px }
     .error { color:#ff8080; margin-top:8px }
-    .koala-corner { position:fixed; bottom:20px; right:20px; max-width:150px }
   </style>
 </head>
 <body>
@@ -55,8 +54,5 @@
       </form>
     </div>
   </div>
-
-  <img src="{{ url_for('static', filename='koala.png') }}" alt="Koala" class="koala-corner" onclick="document.getElementById('laughSound').play()" style="cursor:pointer">
-  <audio id="laughSound"><source src="{{ url_for('static', filename='laugh.wav') }}" type="audio/mpeg"></audio>
 </body>
 </html>
