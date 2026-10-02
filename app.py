@@ -368,7 +368,9 @@ def user_stats(username):
     if user_id is None:
         return "User not found", 404
     stats = database_utils.get_user_stats(user_id)
-    return render_template('user_stats.html', username=username, stats=stats)
+    current_user_id = database_utils.get_user_id_from_session(session.get('token')) if session.get('token') else None
+    is_owner = current_user_id == user_id
+    return render_template('user_stats.html', username=username, stats=stats, is_owner=is_owner)
 
 
 @app.route('/actor/<int:actor_id>')

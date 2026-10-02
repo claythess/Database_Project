@@ -70,7 +70,7 @@
             {% endfor %}
           </tbody>
         </table>
-      {% else %}<div class="empty">Review movies to see your genre breakdown.</div>{% endif %}
+      {% else %}<div class="empty">{% if is_owner %}Review movies to see your genre breakdown.{% else %}{{ username }} has no genre breakdown yet.{% endif %}</div>{% endif %}
     </section>
 
     <div class="split">
@@ -84,13 +84,13 @@
       </section>
 
       <section class="panel">
-        <h2>Top directors by your average rating</h2>
+        <h2>Top directors by {% if is_owner %}your{% else %}{{ username }}'s{% endif %} average rating</h2>
         <div class="muted">Only directors with at least three rated movies are included.</div>
         {% if stats.top_directors_by_rating %}
           <table><thead><tr><th>Director</th><th>Average</th><th>Rated films</th></tr></thead><tbody>
             {% for director in stats.top_directors_by_rating %}<tr><td><a href="{{ url_for('director_view', director_id=director.id) }}">{{ director.name }}</a></td><td class="number">{{ '%.1f'|format(director.average_rating) }} / 10</td><td>{{ director.rated_movies }}</td></tr>{% endfor %}
           </tbody></table>
-        {% else %}<div class="empty">Rate movies to see your highest-rated directors.</div>{% endif %}
+        {% else %}<div class="empty">{% if is_owner %}Rate movies to see your highest-rated directors.{% else %}{{ username }} has no qualifying director ratings yet.{% endif %}</div>{% endif %}
       </section>
     </div>
 
@@ -110,15 +110,15 @@
         <h2>Horror jumpscares</h2>
         <p><strong>{{ stats.summary.total_jumpscares or 0 }}</strong> jumpscares reported across <strong>{{ stats.summary.jumpscare_reports or 0 }}</strong> movie reviews.</p>
         <div class="muted">Only reports for movies currently in the Horror genre are included.</div>
-        <h3 style="margin-top:20px">Your top 10 jumpscare movies</h3>
-        <div class="muted">Your Horror movies ranked by jumpscares reported.</div>
+        <h3 style="margin-top:20px">{% if is_owner %}Your{% else %}{{ username }}'s{% endif %} top 10 jumpscare movies</h3>
+        <div class="muted">Horror movies ranked by jumpscares {% if is_owner %}you{% else %}{{ username }}{% endif %} reported.</div>
         {% if stats.top_jumpscare_movies %}
           <div class="movie-highlights" style="margin-top:10px">
             {% for movie in stats.top_jumpscare_movies %}
               <div class="movie-highlight"><span class="number">{{ loop.index }}.</span><a href="{{ url_for('movie_view', movie_id=movie.id) }}">{{ movie.title }}</a>{% if movie.year %} ({{ movie.year }}){% endif %}<span class="number">{{ movie.jumpscare_count }} jumpscares</span></div>
             {% endfor %}
           </div>
-        {% else %}<div class="empty" style="margin-top:10px">You have not reported jumpscares for a Horror movie yet.</div>{% endif %}
+        {% else %}<div class="empty" style="margin-top:10px">{% if is_owner %}You have not reported jumpscares for a Horror movie yet.{% else %}{{ username }} has not reported jumpscares for a Horror movie yet.{% endif %}</div>{% endif %}
       </section>
     </div>
   </main>
