@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ username }}'s Movie Stats</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <style>
+    :root { color-scheme: light dark; --line:var(--border); --muted-text:var(--muted); --gold:var(--accent); --red:var(--danger); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(ellipse at top,#231010 0,#080808 44rem); color:#fff; font-family:Arial,sans-serif; }
+    .header { padding:24px 16px 8px; text-align:center; }
+    .logo { width:min(400px,90%); height:auto; cursor:pointer; }
+    .container { width:min(1100px,94%); margin:12px auto 48px; }
+    .topline { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin:12px 0 22px; }
+    h1 { margin:0; font-size:clamp(25px,4vw,36px); }
+    h2 { margin:0 0 16px; font-size:20px; }
+    .muted { color:var(--muted-text); }
+    a { color:var(--gold); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .button { padding:9px 13px; border:1px solid #393939; border-radius:7px; background:#202020; }
+    .summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:13px; margin-bottom:18px; }
+    .metric, .panel { background:linear-gradient(145deg,#191919,#101010); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 26px #0006; }
+    .metric { padding:18px; }
+    .metric-label { color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.07em; }
+    .metric-value { display:block; margin-top:9px; color:var(--gold); font-size:28px; font-weight:700; }
+    .panel { padding:21px; margin-top:17px; }
+    .split { display:grid; grid-template-columns:1fr 1fr; gap:17px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:11px 9px; border-bottom:1px solid #292929; text-align:left; }
+    th { color:var(--muted-text); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+    tbody tr:last-child td { border-bottom:0; }
+    .number { color:var(--gold); font-weight:700; white-space:nowrap; }
+    .empty { color:var(--muted-text); padding:10px 0 2px; }
+    .horror { border-color:#512424; }
+    .horror h2, .horror .metric-value { color:var(--red); }
+    .movie-highlight { padding:15px; background:#0b0b0b; border-radius:8px; }
+    @media (max-width:720px) { .split { grid-template-columns:1fr; } .panel { padding:16px; overflow-x:auto; } th,td { padding:9px 6px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Movie app logo" class="logo" onclick="window.location.href='{{ url_for('user_profile', username=username) }}'">
+  </div>
+  <main class="container">
+    <div class="topline">
+      <div>
+        <h1>{{ username }}'s movie stats</h1>
+        <div class="muted">Stats are based on the latest review for each movie.</div>
+      </div>
+      <a class="button" href="{{ url_for('user_profile', username=username) }}">Back to profile</a>
+    </div>
+
+    <section class="summary" aria-label="Overview">
+      <div class="metric"><span class="metric-label">Movies watched</span><span class="metric-value">{{ stats.summary.movies_seen or 0 }}</span></div>
+      <div class="metric"><span class="metric-label">Movies rated</span><span class="metric-value">{{ stats.summary.rated_movies or 0 }}</span></div>
+      <div class="metric"><span class="metric-label">Average rating</span><span class="metric-value">{% if stats.summary.average_rating is not none %}{{ '%.1f'|format(stats.summary.average_rating) }} / 10{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="metric-label">Last reviewed</span><span class="metric-value" style="font-size:17px">{{ stats.summary.last_watched or '—' }}</span></div>
+    </section>
+
+    <section class="panel">
+      <h2>Movies watched and average rating by genre</h2>
+      {% if stats.genres %}
+        <table>
+          <thead><tr><th>Genre</th><th>Watched</th><th>Rated</th><th>Average rating</th></tr></thead>
+          <tbody>
+            {% for row in stats.genres %}
+              <tr><td>{{ row.genre }}</td><td class="number">{{ row.movies_watched }}</td><td>{{ row.rated_movies }}</td><td>{% if row.average_rating is not none %}{{ '%.1f'|format(row.average_rating) }} / 10{% else %}—{% endif %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}<div class="empty">Review movies to see your genre breakdown.</div>{% endif %}
+    </section>
+
+    <div class="split">
+      <section class="panel">
+        <h2>Top directors by movies watched</h2>
+        {% if stats.top_directors_by_movies %}
+          <table><thead><tr><th>Director</th><th>Movies</th></tr></thead><tbody>
+            {% for director in stats.top_directors_by_movies %}<tr><td><a href="{{ url_for('director_view', director_id=director.id) }}">{{ director.name }}</a></td><td class="number">{{ director.movies_watched }}</td></tr>{% endfor %}
+          </tbody></table>
+        {% else %}<div class="empty">No director data for reviewed movies yet.</div>{% endif %}
+      </section>
+
+      <section class="panel">
+        <h2>Top directors by your average rating</h2>
+        <div class="muted">Only directors with at least three rated movies are included.</div>
+        {% if stats.top_directors_by_rating %}
+          <table><thead><tr><th>Director</th><th>Average</th><th>Rated films</th></tr></thead><tbody>
+            {% for director in stats.top_directors_by_rating %}<tr><td><a href="{{ url_for('director_view', director_id=director.id) }}">{{ director.name }}</a></td><td class="number">{{ '%.1f'|format(director.average_rating) }} / 10</td><td>{{ director.rated_movies }}</td></tr>{% endfor %}
+          </tbody></table>
+        {% else %}<div class="empty">Rate movies to see your highest-rated directors.</div>{% endif %}
+      </section>
+    </div>
+
+    <div class="split">
+      <section class="panel">
+        <h2>Highest-rated movie</h2>
+        {% if stats.highest_rated_movies %}
+          <div class="movie-highlights">
+            {% for movie in stats.highest_rated_movies %}
+              <div class="movie-highlight"><a href="{{ url_for('movie_view', movie_id=movie.id) }}">{{ movie.title }}</a>{% if movie.year %} ({{ movie.year }}){% endif %}<span class="number">{{ '%.1f'|format(movie.rating) }} / 10</span></div>
+            {% endfor %}
+          </div>
+        {% else %}<div class="empty">No rated movies yet.</div>{% endif %}
+      </section>
+
+      <section class="panel horror">
+        <h2>Horror jumpscares</h2>
+        <p><strong>{{ stats.summary.total_jumpscares or 0 }}</strong> jumpscares reported across <strong>{{ stats.summary.jumpscare_reports or 0 }}</strong> movie reviews.</p>
+        <div class="muted">Only reports for movies currently in the Horror genre are included.</div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

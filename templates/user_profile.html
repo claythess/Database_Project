@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ username }} - Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
   <style>
     body { background:#000;color:#fff;font-family:Arial, sans-serif;margin:0;padding:0 }
     .header{padding:20px;text-align:center}
@@ -23,6 +25,7 @@
     <div class="card">
       <h2>{{ username }}</h2>
       <p>Movies seen: <span class="fav">{{ movies_seen }}</span></p>
+      <p><a class="fav" href="{{ url_for('user_stats', username=username) }}">View {{ 'your' if is_owner else username + '’s' }} stats</a></p>
       <p>Favorite Actor: {% if favorite_actor %}<a class="fav" href="{{ url_for('actor_view', actor_id=favorite_actor.id) }}">{{ favorite_actor.name }}</a>{% else %}—{% endif %}</p>
       <p>Favorite Director: {% if favorite_director %}<a class="fav" href="{{ url_for('director_view', director_id=favorite_director.id) }}">{{ favorite_director.name }}</a>{% else %}—{% endif %}</p>
       <p>Favorite Movie Quote: {% if favorite_movie_quote %}<span class="fav" style="font-style:italic;">"{{ favorite_movie_quote.quote }}"</span>{% else %}—{% endif %}</p>
@@ -86,6 +89,7 @@
                 {% endif %}
               </div>
               <div style="color:#ffd700">Rating: {{ r['rating'] }}</div>
+              {% if r.get('jumpscare_count') is not none %}<div style="color:#ff9c9c">Jumpscares reported: {{ r['jumpscare_count'] }}</div>{% endif %}
               <div style="margin-top:6px">{{ r['review'] }}</div>
               {% if r.get('created_at') %}<div style="font-size:12px;color:#888;margin-top:8px">{{ r['created_at'] }}</div>{% endif %}
             </div>

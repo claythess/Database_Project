@@ -9,6 +9,19 @@ import database_utils
 # current module (__name__) as argument.
 app = Flask(__name__)
 
+def parse_jumpscare_count(raw_value, horror_movie):
+    if raw_value is None or raw_value.strip() == '':
+        return None, None
+    if not horror_movie:
+        return None, "Jumpscare counts can only be recorded for Horror movies"
+    try:
+        count = int(raw_value)
+    except ValueError:
+        return None, "Jumpscares must be a whole number"
+    if count < 0:
+        return None, "Jumpscares cannot be negative"
+    return count, None
+
 @app.route('/')
 def hello_world():
     return render_template('login.html')
@@ -102,11 +115,14 @@ def movie_view(movie_id):
     production_company_data = database_utils.get_movie_production_company(movie_id)
     genre_data = database_utils.get_movie_genres(movie_id)
     if movie_data:
+        horror_movie = database_utils.is_horror_movie(movie_id)
         return render_template('movie.html', movie=movie_data,
                        directors=director_data,
                        actors=actor_data,
                        companies=production_company_data,
-                       genres=genre_data)
+                       genres=genre_data,
+                       horror_movie=horror_movie,
+                       jumpscare_stats=database_utils.get_movie_jumpscare_stats(movie_id) if horror_movie else None)
     else:
         return "Movie not found", 404
 
@@ -126,11 +142,20 @@ def write_review(movie_id):
         movie_data = database_utils.get_movie_by_id(movie_id)
         if not movie_data:
             return "Movie not found", 404
-        return render_template('write_review.html', movie=movie_data)
+        return render_template(
+            'write_review.html',
+            movie=movie_data,
+            horror_movie=database_utils.is_horror_movie(movie_id),
+        )
 
     # POST - handle submitted review
     rating_raw = request.form.get('rating')
     review_text = request.form.get('review')
+    jumpscare_raw = request.form.get('jumpscare_count')
+    movie_data = database_utils.get_movie_by_id(movie_id)
+    if not movie_data:
+        return "Movie not found", 404
+    horror_movie = database_utils.is_horror_movie(movie_id)
 
     try:
         rating = float(rating_raw) if rating_raw is not None and rating_raw != '' else None
@@ -139,12 +164,15 @@ def write_review(movie_id):
 
     # Validate rating: must be a number between 0 and 10 (inclusive)
     if rating is None or rating < 0.0 or rating > 10.0:
-        movie_data = database_utils.get_movie_by_id(movie_id)
         error_msg = "Rating must be a number between 0 and 10"
-        return render_template('write_review.html', movie=movie_data, error=error_msg, rating=rating_raw, review_text=review_text), 400
+        return render_template('write_review.html', movie=movie_data, horror_movie=horror_movie, error=error_msg, rating=rating_raw, review_text=review_text, jumpscare_count=jumpscare_raw), 400
+
+    jumpscare_count, error_msg = parse_jumpscare_count(jumpscare_raw, horror_movie)
+    if error_msg:
+        return render_template('write_review.html', movie=movie_data, horror_movie=horror_movie, error=error_msg, rating=rating_raw, review_text=review_text, jumpscare_count=jumpscare_raw), 400
 
     # Call database util to insert review
-    database_utils.insert_review(user_id, movie_id, rating, review_text)
+    database_utils.insert_review(user_id, movie_id, rating, review_text, jumpscare_count)
 
     return redirect(url_for('movie_view', movie_id=movie_id))
 
@@ -176,6 +204,8 @@ def edit_review(review_id):
             movie=movie_data,
             rating=review['rating'],
             review_text=review['review'],
+            jumpscare_count=review['jumpscare_count'],
+            horror_movie=database_utils.is_horror_movie(review['movie_id']),
             edit_mode=True,
             review_id=review_id,
             sort_by=sort_by,
@@ -184,6 +214,8 @@ def edit_review(review_id):
 
     rating_raw = request.form.get('rating')
     review_text = request.form.get('review')
+    jumpscare_raw = request.form.get('jumpscare_count')
+    horror_movie = database_utils.is_horror_movie(review['movie_id'])
 
     try:
         rating = float(rating_raw) if rating_raw is not None and rating_raw != '' else None
@@ -198,13 +230,31 @@ def edit_review(review_id):
             error=error_msg,
             rating=rating_raw,
             review_text=review_text,
+            jumpscare_count=jumpscare_raw,
+            horror_movie=horror_movie,
             edit_mode=True,
             review_id=review_id,
             sort_by=sort_by,
             order=order,
         ), 400
 
-    database_utils.update_review(review_id, rating, review_text)
+    jumpscare_count, error_msg = parse_jumpscare_count(jumpscare_raw, horror_movie)
+    if error_msg:
+        return render_template(
+            'write_review.html',
+            movie=movie_data,
+            error=error_msg,
+            rating=rating_raw,
+            review_text=review_text,
+            jumpscare_count=jumpscare_raw,
+            horror_movie=horror_movie,
+            edit_mode=True,
+            review_id=review_id,
+            sort_by=sort_by,
+            order=order,
+        ), 400
+
+    database_utils.update_review(review_id, rating, review_text, jumpscare_count)
     return redirect(url_for('myprofile', sort_by=sort_by, order=order))
 
 
@@ -298,6 +348,27 @@ def user_profile(username):
             is_following = True
 
     return render_template('user_profile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, favorite_movie_quote=favorite_movie_quote, is_owner=is_owner, is_following=is_following, movies_seen=movies_seen, sort_by=sort_by, order=order)
+
+
+@app.route('/stats')
+def my_stats():
+    token = session.get('token')
+    if not token:
+        return redirect(url_for('hello_world'))
+    user_id = database_utils.get_user_id_from_session(token)
+    if user_id is None:
+        return redirect(url_for('hello_world'))
+    username = database_utils.get_user_by_id(user_id)
+    return redirect(url_for('user_stats', username=username))
+
+
+@app.route('/user/<username>/stats')
+def user_stats(username):
+    user_id = database_utils.get_user_id(username)
+    if user_id is None:
+        return "User not found", 404
+    stats = database_utils.get_user_stats(user_id)
+    return render_template('user_stats.html', username=username, stats=stats)
 
 
 @app.route('/actor/<int:actor_id>')

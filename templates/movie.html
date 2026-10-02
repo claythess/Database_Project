@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ movie['title'] }} - Movie Application</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+<script src="{{ url_for('static', filename='theme.js') }}" defer></script>
 <style>
 body {
     background-color: black;
@@ -161,6 +163,13 @@ body {
             <div class="info-section">
                 <div class="info-label">Genres</div>
                 <div class="info-content">{{ genres | join(', ') }}</div>
+            </div>
+            {% endif %}
+
+            {% if horror_movie and jumpscare_stats.report_count %}
+            <div class="info-section">
+                <div class="info-label">Community jumpscare reports</div>
+                <div class="info-content">{{ jumpscare_stats.total_jumpscares }} total across {{ jumpscare_stats.report_count }} reports (average {{ '%.1f'|format(jumpscare_stats.average_jumpscares) }} per report)</div>
             </div>
             {% endif %}
 

@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Profile - Movie Application</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+<script src="{{ url_for('static', filename='theme.js') }}" defer></script>
 <style>
 body {
     background-color: black;
@@ -162,6 +164,7 @@ body {
             <h2>{{ username or 'My Profile' }}</h2>
             <div style="margin-top:8px;font-size:16px;color:#ccc;">
                 Movies seen: <strong>{{ movies_seen }}</strong>
+                <a href="{{ url_for('my_stats') }}" style="color:#ffd700;margin-left:12px;">View my stats</a>
             </div>
         </div>
 
@@ -242,6 +245,9 @@ body {
                                     {% endif %}
                                 </div>
                                 <div style="color:#ffd700;margin-bottom:6px;">Rating: {{ r['rating'] }}</div>
+                                {% if r.get('jumpscare_count') is not none %}
+                                    <div style="color:#ff9c9c;margin-bottom:6px;">Jumpscares reported: {{ r['jumpscare_count'] }}</div>
+                                {% endif %}
                                 <div style="margin-bottom:8px;">{{ r['review'] }}</div>
                                 {% if r.get('created_at') %}
                                     <div style="font-size:12px;color:#888;margin-bottom:10px;">Added: {{ r['created_at'] }}</div>

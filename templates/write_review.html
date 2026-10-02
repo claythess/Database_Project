@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Write Review - {{ movie.title if movie else 'Movie' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
   <style>
     body { background-color: #000; color: #fff; font-family: Arial, sans-serif; margin:0; padding:0 }
     .header { text-align:center; padding:20px; }
@@ -46,6 +48,12 @@
 
         <label for="review">Your review</label>
         <textarea id="review" name="review">{{ review_text or '' }}</textarea>
+
+        {% if horror_movie %}
+          <label for="jumpscare_count">Jumpscares (optional)</label>
+          <input type="number" id="jumpscare_count" name="jumpscare_count" min="0" step="1" value="{{ jumpscare_count if jumpscare_count is not none else '' }}">
+          <div style="margin-top:6px;color:#888;font-size:13px;">Record the number of jumpscares you noticed in this Horror movie.</div>
+        {% endif %}
 
         <div>
           <button type="submit" class="btn">{% if edit_mode %}Save Review{% else %}Submit Review{% endif %}</button>

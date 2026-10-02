@@ -232,6 +232,32 @@ def get_movie_genres(movie_id):
         return [i["name"] for i in ret]
     else:
         return []
+
+def is_horror_movie(movie_id):
+    sql = """select 1 from genre_movie gm
+        join genre g on g.id = gm.genre_id
+        where gm.movie_id = ? and lower(trim(g.name)) = 'horror'
+        limit 1;"""
+    cursor = conn.cursor()
+    cursor.execute(sql, (movie_id,))
+    return cursor.fetchone() is not None
+
+def get_movie_jumpscare_stats(movie_id):
+    sql = """with latest_reports as (
+        select jumpscare_count,
+            row_number() over (
+                partition by user_id, movie_id
+                order by created_at desc, rowid desc
+            ) as report_rank
+        from movie_rating where movie_id = ?
+    )
+    select count(jumpscare_count) as report_count,
+        coalesce(sum(jumpscare_count), 0) as total_jumpscares,
+        avg(jumpscare_count) as average_jumpscares
+        from latest_reports where report_rank = 1;"""
+    cursor = conn.cursor()
+    cursor.execute(sql, (movie_id,))
+    return cursor.fetchone()
     
 def get_movie_production_company(movie_id):
     sql = """select p.name from movie m 
@@ -324,11 +350,12 @@ def get_movies_by_director(director_id, sort_by='title', order='asc'):
     else:
         return []
         
-def insert_review(user_id, movie_id, rating, review):
-    sql = """insert into movie_rating (user_id, movie_id, rating, review) values (?, ?, ?, ?);"""
+def insert_review(user_id, movie_id, rating, review, jumpscare_count=None):
+    sql = """insert into movie_rating (user_id, movie_id, rating, review, jumpscare_count)
+        values (?, ?, ?, ?, ?);"""
     
     cursor = conn.cursor()
-    cursor.execute(sql, (user_id, movie_id, rating, review))
+    cursor.execute(sql, (user_id, movie_id, rating, review, jumpscare_count))
     
 def get_user_reviews(user_id):
     sql = """select rowid as review_id, * from movie_rating where user_id = ? order by created_at desc;"""
@@ -348,16 +375,103 @@ def get_review_by_id(review_id):
     return cursor.fetchone()
 
 
-def update_review(review_id, rating, review):
-    sql = """update movie_rating set rating = ?, review = ? where rowid = ?;"""
+def update_review(review_id, rating, review, jumpscare_count=None):
+    sql = """update movie_rating set rating = ?, review = ?, jumpscare_count = ? where rowid = ?;"""
     cursor = conn.cursor()
-    cursor.execute(sql, (rating, review, review_id))
+    cursor.execute(sql, (rating, review, jumpscare_count, review_id))
 
 
 def delete_review(review_id):
     sql = """delete from movie_rating where rowid = ?;"""
     cursor = conn.cursor()
     cursor.execute(sql, (review_id,))
+
+
+def get_user_stats(user_id):
+    latest_reviews = """with latest_reviews as (
+        select mr.rowid as review_id, mr.movie_id, mr.rating, mr.jumpscare_count, mr.created_at,
+            row_number() over (
+                partition by mr.user_id, mr.movie_id
+                order by mr.created_at desc, mr.rowid desc
+            ) as review_rank
+        from movie_rating mr
+        where mr.user_id = ?
+    ), watched as (
+        select review_id, movie_id, rating, jumpscare_count, created_at
+        from latest_reviews where review_rank = 1
+    ), movie_genres as (
+        select distinct movie_id, genre_id from genre_movie
+    ), movie_directors as (
+        select distinct movie_id, director_id from director_movie
+    ) """
+
+    cursor = conn.cursor()
+    cursor.execute(latest_reviews + """select
+        count(*) as movies_seen,
+        count(rating) as rated_movies,
+        avg(rating) as average_rating,
+        max(created_at) as last_watched,
+        sum(case when jumpscare_count is not null and exists (
+            select 1 from movie_genres mg
+            join genre g on g.id = mg.genre_id
+            where mg.movie_id = watched.movie_id and lower(trim(g.name)) = 'horror'
+        ) then 1 else 0 end) as jumpscare_reports,
+        coalesce(sum(case when jumpscare_count is not null and exists (
+            select 1 from movie_genres mg
+            join genre g on g.id = mg.genre_id
+            where mg.movie_id = watched.movie_id and lower(trim(g.name)) = 'horror'
+        ) then jumpscare_count else 0 end), 0) as total_jumpscares
+        from watched;""", (user_id,))
+    summary = cursor.fetchone()
+
+    cursor.execute(latest_reviews + """select g.name as genre,
+        count(distinct w.movie_id) as movies_watched,
+        count(distinct case when w.rating is not null then w.movie_id end) as rated_movies,
+        avg(w.rating) as average_rating
+        from watched w
+        join movie_genres mg on mg.movie_id = w.movie_id
+        join genre g on g.id = mg.genre_id
+        group by g.id, g.name
+        order by movies_watched desc, lower(g.name) asc;""", (user_id,))
+    genre_stats = cursor.fetchall()
+
+    cursor.execute(latest_reviews + """select d.id, d.name,
+        count(distinct w.movie_id) as movies_watched
+        from watched w
+        join movie_directors md on md.movie_id = w.movie_id
+        join director d on d.id = md.director_id
+        group by d.id, d.name
+        order by movies_watched desc, lower(d.name) asc
+        limit 5;""", (user_id,))
+    top_directors_by_movies = cursor.fetchall()
+
+    cursor.execute(latest_reviews + """select d.id, d.name,
+        avg(w.rating) as average_rating,
+        count(distinct w.movie_id) as rated_movies
+        from watched w
+        join movie_directors md on md.movie_id = w.movie_id
+        join director d on d.id = md.director_id
+        where w.rating is not null
+        group by d.id, d.name
+        having count(distinct w.movie_id) >= 3
+        order by average_rating desc, rated_movies desc, lower(d.name) asc
+        limit 5;""", (user_id,))
+    top_directors_by_rating = cursor.fetchall()
+
+    cursor.execute(latest_reviews + """select m.id, m.title, m.year, w.rating
+        from watched w join movie m on m.id = w.movie_id
+        where w.rating is not null
+          and w.rating = (select max(rating) from watched)
+        order by lower(m.title) asc, m.year asc;""", (user_id,))
+    highest_rated_movies = cursor.fetchall()
+
+    return {
+        'summary': summary,
+        'genres': genre_stats,
+        'top_directors_by_movies': top_directors_by_movies,
+        'top_directors_by_rating': top_directors_by_rating,
+        'highest_rated_movies': highest_rated_movies,
+    }
 
 
 
