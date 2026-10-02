@@ -465,12 +465,26 @@ def get_user_stats(user_id):
         order by lower(m.title) asc, m.year asc;""", (user_id,))
     highest_rated_movies = cursor.fetchall()
 
+    cursor.execute(latest_reviews + """select m.id, m.title, m.year, w.jumpscare_count
+        from watched w
+        join movie m on m.id = w.movie_id
+        where w.jumpscare_count is not null
+          and exists (
+              select 1 from movie_genres mg
+              join genre g on g.id = mg.genre_id
+              where mg.movie_id = w.movie_id and lower(trim(g.name)) = 'horror'
+          )
+        order by w.jumpscare_count desc, lower(m.title) asc, m.year asc
+        limit 10;""", (user_id,))
+    top_jumpscare_movies = cursor.fetchall()
+
     return {
         'summary': summary,
         'genres': genre_stats,
         'top_directors_by_movies': top_directors_by_movies,
         'top_directors_by_rating': top_directors_by_rating,
         'highest_rated_movies': highest_rated_movies,
+        'top_jumpscare_movies': top_jumpscare_movies,
     }
 
 

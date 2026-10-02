@@ -32,7 +32,7 @@ Jumpscare totals are optional, nonnegative whole-number reports on a user's revi
 
 ## User statistics
 
-Open **View my stats** from your profile, or visit `/user/<username>/stats`. The page includes watched and rated movie counts, overall and per-genre average ratings, top five directors by watched movies, and top directors by average rating (only directors with at least three rated movies qualify). It also includes every movie tied for the user's highest rating, last reviewed date, and Horror jumpscare reports.
+Open **View my stats** from your profile, or visit `/user/<username>/stats`. The page includes watched and rated movie counts, overall and per-genre average ratings, top five directors by watched movies, and top directors by average rating (only directors with at least three rated movies qualify). It also includes every movie tied for the user's highest rating, last reviewed date, Horror jumpscare reports, and the user's top ten Horror movies by reported jumpscares.
 
 ## Display theme
 
