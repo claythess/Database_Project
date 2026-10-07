@@ -31,18 +31,7 @@
       <p>Favorite Movie Quote: {% if favorite_movie_quote %}<span class="fav" style="font-style:italic;">"{{ favorite_movie_quote.quote }}"</span>{% else %}—{% endif %}</p>
 
       {% if is_owner %}
-        <form action="/set_favorite_actor" method="post" style="margin-top:10px;">
-          <input type="text" name="actor" placeholder="Set favorite actor (name)" style="padding:8px;border-radius:6px;background:#111;border:1px solid #222;color:#fff">
-          <button type="submit" style="padding:8px 12px;margin-left:8px">Set Actor</button>
-        </form>
-        <form action="/set_favorite_director" method="post" style="margin-top:8px;">
-          <input type="text" name="director" placeholder="Set favorite director (name)" style="padding:8px;border-radius:6px;background:#111;border:1px solid #222;color:#fff">
-          <button type="submit" style="padding:8px 12px;margin-left:8px">Set Director</button>
-        </form>
-        <form action="/set_favorite_movie_quote" method="post" style="margin-top:8px;">
-          <input type="text" name="movie_quote" placeholder="Set favorite movie quote" style="padding:8px;border-radius:6px;background:#111;border:1px solid #222;color:#fff;width:300px">
-          <button type="submit" style="padding:8px 12px;margin-left:8px">Set Quote</button>
-        </form>
+        <p><a class="fav" href="{{ url_for('settings_page') }}">Edit profile settings</a></p>
       {% else %}
         {% if is_following %}
           <form action="/follow_user" method="post" style="display:inline-block;">
@@ -74,7 +63,15 @@
             <option value="desc" {% if order == 'desc' %}selected{% endif %}>Descending</option>
           </select>
         </label>
-        <button type="submit" style="padding:8px 14px;background:#2a2a2a;color:white;border:none;border-radius:4px;cursor:pointer;">Sort</button>
+        <label style="font-size:14px;color:#ccc;">
+          Per page
+          <select name="page_size" style="margin-left:6px;padding:8px;border-radius:4px;border:1px solid #333;background:#111;color:white;">
+            <option value="30" {% if page_size == 30 %}selected{% endif %}>30</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+          </select>
+        </label>
+        <button type="submit" style="padding:8px 14px;background:#2a2a2a;color:white;border:none;border-radius:4px;cursor:pointer;">Apply</button>
       </form>
       <div class="reviews-grid">
         {% if reviews and reviews|length > 0 %}
@@ -98,6 +95,17 @@
           <div class="review-box">No reviews yet.</div>
         {% endif %}
       </div>
+      {% if total_pages > 1 %}
+        <div style="margin-top:16px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;">
+          {% if page > 1 %}
+            <a href="{{ url_for('user_profile', username=username, sort_by=sort_by, order=order, page=page-1, page_size=page_size) }}" style="color:#fff;padding:8px 12px;border-radius:4px;background:#2a2a2a;text-decoration:none;">Previous</a>
+          {% endif %}
+          <span style="color:#ccc;">Page {{ page }} of {{ total_pages }}</span>
+          {% if page < total_pages %}
+            <a href="{{ url_for('user_profile', username=username, sort_by=sort_by, order=order, page=page+1, page_size=page_size) }}" style="color:#fff;padding:8px 12px;border-radius:4px;background:#2a2a2a;text-decoration:none;">Next</a>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
   </div>
 </body>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profile Settings</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <style>
+    body { background:#000;color:#fff;font-family:Arial, sans-serif;margin:0;padding:0 }
+    .header{padding:20px;text-align:center;position:relative}
+    .logo{max-width:400px;cursor:pointer}
+    .container{max-width:900px;margin:20px auto;padding:20px}
+    .card{background:#0f0f0f;padding:24px;border-radius:8px}
+    .form-row{margin-top:14px}
+    input[type="text"]{padding:10px;border-radius:6px;background:#111;border:1px solid #222;color:#fff;width:100%;box-sizing:border-box}
+    button, .back-link{padding:10px 14px;border-radius:6px;border:none;background:#2a2a2a;color:#fff;cursor:pointer;text-decoration:none;display:inline-block;margin-top:8px}
+    .back-link { background: transparent; border: 1px solid #333; }
+    .label{display:block;margin-bottom:8px;color:#ddd;font-weight:bold}
+    .current-value{color:#ffd700;padding-top:6px}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" onclick="window.location.href='{{ url_for('myprofile') }}'" alt="Movie app logo">
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>{{ username }}'s Settings</h2>
+      <p>Update your favorite movie details here.</p>
+
+      <form action="{{ url_for('set_favorite_actor') }}" method="post" class="form-row">
+        <label class="label" for="actor">Favorite Actor</label>
+        <input id="actor" type="text" name="actor" value="{{ favorite_actor.name if favorite_actor else '' }}" placeholder="Set favorite actor (name)">
+        <button type="submit">Save Actor</button>
+      </form>
+
+      <form action="{{ url_for('set_favorite_director') }}" method="post" class="form-row">
+        <label class="label" for="director">Favorite Director</label>
+        <input id="director" type="text" name="director" value="{{ favorite_director.name if favorite_director else '' }}" placeholder="Set favorite director (name)">
+        <button type="submit">Save Director</button>
+      </form>
+
+      <form action="{{ url_for('set_favorite_movie_quote') }}" method="post" class="form-row">
+        <label class="label" for="movie_quote">Favorite Movie Quote</label>
+        <input id="movie_quote" type="text" name="movie_quote" value="{{ favorite_movie_quote.quote if favorite_movie_quote else '' }}" placeholder="Set favorite movie quote">
+        <button type="submit">Save Quote</button>
+      </form>
+
+      <div class="form-row">
+        <a class="back-link" href="{{ url_for('myprofile') }}">Back to Profile</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

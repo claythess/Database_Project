@@ -9,6 +9,27 @@ import database_utils
 # current module (__name__) as argument.
 app = Flask(__name__)
 
+
+def normalize_page_size(raw_value):
+    try:
+        page_size = int(raw_value) if raw_value is not None else 30
+    except (TypeError, ValueError):
+        page_size = 30
+    return page_size if page_size in (30, 50, 100) else 30
+
+
+def paginate_items(items, page, page_size):
+    if page < 1:
+        page = 1
+    total_items = len(items)
+    total_pages = max(1, (total_items + page_size - 1) // page_size) if total_items else 1
+    if page > total_pages:
+        page = total_pages
+    start = (page - 1) * page_size
+    end = start + page_size
+    return items[start:end], page, total_pages, total_items
+
+
 def parse_jumpscare_count(raw_value, horror_movie):
     if raw_value is None or raw_value.strip() == '':
         return None, None
@@ -62,6 +83,10 @@ def myprofile():
 
     sort_by = request.args.get('sort_by', 'date_added')
     order = request.args.get('order', 'desc')
+    page = request.args.get('page', 1, type=int)
+    if page is None:
+        page = 1
+    page_size = normalize_page_size(request.args.get('page_size'))
 
     username = database_utils.get_user_by_id(user_id)
     reviews = list(database_utils.get_user_reviews(user_id))
@@ -92,11 +117,12 @@ def myprofile():
 
     followers = list(database_utils.get_followers(user_id))
     followees = list(database_utils.get_followees(user_id))
+    review_page, page, total_pages, total_reviews = paginate_items(enriched, page, page_size)
 
     return render_template(
         'myprofile.html',
         username=username,
-        reviews=enriched,
+        reviews=review_page,
         favorite_actor=favorite_actor,
         favorite_director=favorite_director,
         favorite_movie_quote=favorite_movie_quote,
@@ -105,6 +131,10 @@ def myprofile():
         movies_seen=movies_seen,
         sort_by=sort_by,
         order=order,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        total_reviews=total_reviews,
     )
 
 @app.route('/movie/<int:movie_id>')
@@ -308,6 +338,10 @@ def user_profile(username):
 
     sort_by = request.args.get('sort_by', 'date_added')
     order = request.args.get('order', 'desc')
+    page = request.args.get('page', 1, type=int)
+    if page is None:
+        page = 1
+    page_size = normalize_page_size(request.args.get('page_size'))
 
     reviews = database_utils.get_user_reviews(uid)
     movies_seen = len({r['movie_id'] for r in reviews if r['movie_id'] is not None})
@@ -316,7 +350,9 @@ def user_profile(username):
         r = dict(r)
         movie = None
         try:
-            movie = database_utils.get_movie_by_id(r.get('movie_id'))
+            movie_row = database_utils.get_movie_by_id(r.get('movie_id'))
+            if movie_row is not None:
+                movie = dict(movie_row)
         except Exception:
             movie = None
         r['movie'] = movie
@@ -347,7 +383,25 @@ def user_profile(username):
         if cf and username in cf:
             is_following = True
 
-    return render_template('user_profile.html', username=username, reviews=enriched, favorite_actor=favorite_actor, favorite_director=favorite_director, favorite_movie_quote=favorite_movie_quote, is_owner=is_owner, is_following=is_following, movies_seen=movies_seen, sort_by=sort_by, order=order)
+    review_page, page, total_pages, total_reviews = paginate_items(enriched, page, page_size)
+
+    return render_template(
+        'user_profile.html',
+        username=username,
+        reviews=review_page,
+        favorite_actor=favorite_actor,
+        favorite_director=favorite_director,
+        favorite_movie_quote=favorite_movie_quote,
+        is_owner=is_owner,
+        is_following=is_following,
+        movies_seen=movies_seen,
+        sort_by=sort_by,
+        order=order,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        total_reviews=total_reviews,
+    )
 
 
 @app.route('/stats')
@@ -397,6 +451,29 @@ def director_view(director_id):
     return render_template('director.html', director=director, movies=movies, sort_by=sort_by, order=order)
 
 
+@app.route('/settings')
+def settings_page():
+    token = session.get('token')
+    if not token:
+        return redirect(url_for('hello_world'))
+    user_id = database_utils.get_user_id_from_session(token)
+    if user_id is None:
+        return redirect(url_for('hello_world'))
+
+    username = database_utils.get_user_by_id(user_id)
+    favorite_actor = database_utils.get_favorite_actor(user_id)
+    favorite_director = database_utils.get_favorite_director(user_id)
+    favorite_movie_quote = database_utils.get_favorite_movie_quote(user_id)
+
+    return render_template(
+        'settings.html',
+        username=username,
+        favorite_actor=favorite_actor,
+        favorite_director=favorite_director,
+        favorite_movie_quote=favorite_movie_quote,
+    )
+
+
 @app.route('/set_favorite_actor', methods=['POST'])
 def set_favorite_actor():
     token = session.get('token')
@@ -410,7 +487,7 @@ def set_favorite_actor():
     if actor_name and actor_name.strip() != '':
         database_utils.set_favorite_actor_by_name(user_id, actor_name.strip())
 
-    return redirect(url_for('myprofile'))
+    return redirect(url_for('settings_page'))
 
 
 @app.route('/set_favorite_director', methods=['POST'])
@@ -426,7 +503,7 @@ def set_favorite_director():
     if director_name and director_name.strip() != '':
         database_utils.set_favorite_director_by_name(user_id, director_name.strip())
 
-    return redirect(url_for('myprofile'))
+    return redirect(url_for('settings_page'))
 
 
 @app.route('/set_favorite_movie_quote', methods=['POST'])
@@ -442,7 +519,7 @@ def set_favorite_movie_quote():
     if movie_quote and movie_quote.strip() != '':
         database_utils.set_favorite_movie_quote(user_id, movie_quote.strip())
 
-    return redirect(url_for('myprofile'))
+    return redirect(url_for('settings_page'))
 
 
 @app.route('/user_search', methods=['POST'])
