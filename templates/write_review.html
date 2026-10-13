@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Write Review - {{ movie.title if movie else 'Movie' }}</title>
+  <title>{% if edit_mode %}Edit Watch &amp; Review{% else %}Log a Watch &amp; Review{% endif %} - {{ movie.title if movie else 'Movie' }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
   <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
   <style>
@@ -28,7 +28,8 @@
 
   <div class="container">
     <div class="card">
-      <div class="movie-title">{% if edit_mode %}Edit Review for{% else %}Write a Review for{% endif %} {{ movie['title'] if movie else 'this movie' }}</div>
+      <div class="movie-title">{% if edit_mode %}Edit Watch &amp; Review for{% else %}Log a Watch &amp; Review for{% endif %} {{ movie['title'] if movie else 'this movie' }}</div>
+      {% if not edit_mode %}<div style="margin-bottom:12px;color:#aaa;">Each submission records one watch. Submit again when you rewatch this movie.</div>{% endif %}
       {% if error %}
         <div class="error">{{ error }}</div>
       {% endif %}
@@ -44,7 +45,7 @@
           <input type="hidden" name="order" value="{{ order }}">
         {% endif %}
         <label for="rating">Rating (0.0 - 10.0)</label>
-        <input type="number" id="rating" name="rating" min="0" max="10" step="0.1" value="{{ rating or '' }}" required>
+        <input type="text" id="rating" name="rating" inputmode="decimal" pattern="(?:10(?:\.0)?|[0-9](?:\.[0-9])?)" title="Enter a rating from 0 to 10, with up to one decimal place." placeholder="e.g. 8 or 9.5" value="{{ rating if rating is not none else '' }}" required>
 
         <label for="review">Your review</label>
         <textarea id="review" name="review">{{ review_text or '' }}</textarea>
@@ -56,7 +57,7 @@
         {% endif %}
 
         <div>
-          <button type="submit" class="btn">{% if edit_mode %}Save Review{% else %}Submit Review{% endif %}</button>
+          <button type="submit" class="btn">{% if edit_mode %}Save Changes{% else %}Log Watch{% endif %}</button>
           <a href="{{ url_for('movie_view', movie_id=movie['id']) }}" class="btn secondary">Cancel</a>
         </div>
       </form>

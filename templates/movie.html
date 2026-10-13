@@ -169,7 +169,7 @@ body {
             {% if horror_movie and jumpscare_stats.report_count %}
             <div class="info-section">
                 <div class="info-label">Community jumpscare reports</div>
-                <div class="info-content">{{ jumpscare_stats.total_jumpscares }} total across {{ jumpscare_stats.report_count }} reports (average {{ '%.1f'|format(jumpscare_stats.average_jumpscares) }} per report)</div>
+                <div class="info-content">{{ jumpscare_stats.total_jumpscares }} total across {{ jumpscare_stats.report_count }} individual watch reports (average {{ '%.1f'|format(jumpscare_stats.average_jumpscares) }} per report)</div>
             </div>
             {% endif %}
 
@@ -177,7 +177,7 @@ body {
             <div class="info-section">
                 {% if session.get('token') %}
                     <form action="{{ url_for('write_review', movie_id=movie['id']) }}" method="get">
-                        <button type="submit" style="padding:10px 14px;border-radius:6px;background:#2a2a2a;color:white;border:none;cursor:pointer;">Write Review</button>
+                        <button type="submit" style="padding:10px 14px;border-radius:6px;background:#2a2a2a;color:white;border:none;cursor:pointer;">Log a Watch &amp; Review</button>
                     </form>
                 {% else %}
                     <a href="/" style="color:#ccc;">Log in to write a review</a>

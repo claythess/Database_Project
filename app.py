@@ -1,5 +1,7 @@
 # Importing flask module in the project is mandatory
 # An object of Flask class is our WSGI application.
+import re
+
 from flask import Flask, render_template, session, request, redirect, url_for
 import database_utils
 
@@ -42,6 +44,15 @@ def parse_jumpscare_count(raw_value, horror_movie):
     if count < 0:
         return None, "Jumpscares cannot be negative"
     return count, None
+
+
+def parse_rating(raw_value):
+    if raw_value is None:
+        return None
+    normalized = raw_value.strip()
+    if not re.fullmatch(r'(?:10(?:\.0)?|[0-9](?:\.[0-9])?)', normalized):
+        return None
+    return float(normalized)
 
 @app.route('/')
 def hello_world():
@@ -187,10 +198,7 @@ def write_review(movie_id):
         return "Movie not found", 404
     horror_movie = database_utils.is_horror_movie(movie_id)
 
-    try:
-        rating = float(rating_raw) if rating_raw is not None and rating_raw != '' else None
-    except ValueError:
-        rating = None
+    rating = parse_rating(rating_raw)
 
     # Validate rating: must be a number between 0 and 10 (inclusive)
     if rating is None or rating < 0.0 or rating > 10.0:
@@ -247,10 +255,7 @@ def edit_review(review_id):
     jumpscare_raw = request.form.get('jumpscare_count')
     horror_movie = database_utils.is_horror_movie(review['movie_id'])
 
-    try:
-        rating = float(rating_raw) if rating_raw is not None and rating_raw != '' else None
-    except ValueError:
-        rating = None
+    rating = parse_rating(rating_raw)
 
     if rating is None or rating < 0.0 or rating > 10.0:
         error_msg = "Rating must be a number between 0 and 10"
